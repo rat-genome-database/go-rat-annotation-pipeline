@@ -1,0 +1,64 @@
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
+        <property name="version" value="GOA rat annotation pipeline v. 1.4.5, Sep 14, 2018" />
+	    <property name="dataValidation" ref="dataValidation"/>
+	    <property name="dao" ref="dao"/>
+	    <property name="specialRefRgdId" value="1600115"/>
+
+        <property name="goRelFile" value="http://viewvc.geneontology.org/viewvc/GO-SVN/trunk/ontology/extensions/gorel.obo"/>
+
+        <property name="goaRatFiles">
+            <list>
+                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat.gaf.gz</value>
+                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_complex.gaf.gz</value>
+                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_isoform.gaf.gz</value>
+                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_rna.gaf.gz</value>
+                <!--<value>file:///tmp/all.gaf.gz</value>-->
+            </list>
+        </property>
+        <property name="localFile" value="data/gene_association.goa_rat.gz" />
+
+        <!-- file in gaf 2.0 format containing all non-RGD annotations found in file
+          data/gene_association.goa_rat.gz;
+          (we do not want to load rat annotations created in RGD, because those annotations are already in RGD! -->
+        <property name="nonRgdFile" value="data/goa_rat_nonrgd" />
+
+        <!-- non-RGD annotations having one of the following data sources:
+        UniProtKB, RefSeq, ENSEMBL
+        -->
+        <property name="goaFile" value="data/goa_rat" />
+
+        <!-- file in gaf 2.0 format containing all non-RGD annotations that had not been loaded into database;
+          concatenations of log files duplAnnot.log and unMatchedDbObjID.log  -->
+        <property name="goaRgdTxt" value="data/goa_rgd.txt" />
+
+        <property name="importPubMedUrl" value="/tools/curation/retrieve.cgi?pmid_list=" />
+
+        <property name="refRgdIdsForGoPipelines">
+            <set>
+                <value>1303377</value><!-- olfactory genes one-time load-->
+                <value>1600115</value><!-- RAT GO annotations -->
+                <value>2290270</value><!-- mouse GO annotations -->
+                <value>2290271</value><!-- human GO annotations -->
+            </set>
+        </property>
+
+        <property name="sourceSubst">
+            <map>
+                <entry key="UniProtKB" value="UniProt" />
+            </map>
+        </property>
+
+        <property name="staleAnnotDeleteThreshold" value="5%" />
+    </bean>
+		
+	<bean id="dataValidation" class="edu.mcw.rgd.goa.DataValidationImpl">
+	</bean>
+	
+    <bean id="dao" class="edu.mcw.rgd.goa.Dao">
+        <property name="createdBy" value="69"/>
+        <property name="lastModifiedBy" value="69"/>
+    </bean>
+</beans>
