@@ -1,5 +1,6 @@
 package edu.mcw.rgd.goa;
 
+import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -75,6 +76,7 @@ public class GoAnnotManager {
     private Map<String,String> sourceSubst;
     private String staleAnnotDeleteThreshold;
     private String threeMonthOldDate;
+    private Map<String,String> importPubmedToolHost;
 
     public static void main(String[] args) throws Exception {
 
@@ -250,9 +252,16 @@ public class GoAnnotManager {
         log.info(" PubMed ids not in RGD: " + pubMedIds.size());
         log.info(" Import URL: "+getImportPubMedUrl());
 
+        InetAddress inetAddress = InetAddress. getLocalHost();
+        String hostName = inetAddress. getHostName().toLowerCase();
+        String pubmedToolHostUrl = getImportPubmedToolHost().get(hostName);
+        if( pubmedToolHostUrl==null ) {
+            throw new Exception("Update properties file and provide mapping for host "+hostName);
+        }
+
         int importedPubMedIds = 0;
         for( Integer pubMedId: pubMedIds ) {
-            String extFile = getImportPubMedUrl()+pubMedId;
+            String extFile = pubmedToolHostUrl+getImportPubMedUrl()+pubMedId;
 
             FileDownloader downloader = new FileDownloader();
             downloader.setExternalFile(extFile);
@@ -756,5 +765,13 @@ public class GoAnnotManager {
 
     public String getStaleAnnotDeleteThreshold() {
         return staleAnnotDeleteThreshold;
+    }
+
+    public void setImportPubmedToolHost(Map<String,String> importPubmedToolHost) {
+        this.importPubmedToolHost = importPubmedToolHost;
+    }
+
+    public Map<String,String> getImportPubmedToolHost() {
+        return importPubmedToolHost;
     }
 }
