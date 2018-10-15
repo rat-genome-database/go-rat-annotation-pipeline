@@ -1,28 +1,25 @@
+v. 1.4.6, Oct 15, 2018
+- refactored build.gradle to produce lean runnable jar
+
 v. 1.4.5, Sep 14, 2018
 - moved from subversion to github
   implemented automatic conversion of data source field: 'UniProtKB' -> 'UniProt'
 
-
 v. 1.4.4, Aug 22, 2018
 - optimized handling of dates for IEA annotations, to minimize updates of created_date for annotations
-
 
 v. 1.4.3, Jan 23, 2018
 - implemented 5% delete threshold for stale annotations; configurable in properties file
 
-
 v. 1.4.2, Jan 22, 2018
 - implemented automatic conversion of data source field, currently: 'UniProt' -> 'UniProtKB'
-
 
 v. 1.4.1, Jul 18, 2017
 - IEA GO annotation for pipelines have their created date set to current date less 3 month, to avoid
   problems with GOC QC (IEA GO annotations older than 1 year are filtered out)
 
-
 v. 1.4.0, Nov 8, 2016
 - migrated build system from ANT to GRADLE
-
 
 v. 1.3.1, Jun 21, 2016 -- per RGDD-1227
 - when loading annotations with present 'annotation extension field'
@@ -31,29 +28,23 @@ v. 1.3.1, Jun 21, 2016 -- per RGDD-1227
   and obsolete relations are deleted from the 'annotation extension field'.
   Reason: if we submit such annotations to GOC, they will be rejected.
 
-
 v. 1.3.0, Jun 15, 2016
 - updated FTP data sources: EBI changed the files on their FTP site
-
 
 v. 1.2.11, May 13, 2016
 - inserted annotations use current machine timestamp as the CREATED_DATE -- per RGDD-1194
 - in-RGD annotations written to gaf files take CREATED-DATE from database, to be consistent
 - discontinued refresh of annotations to olfactory genes (they will be harmful due to ticket RGDD-1194)
 
-
 v. 1.2.10, Oct 21, 2015
 - updated jars; code tune up for handling qualifiers -- per RGDD-1115
   optimized code by updating FULL_ANNOT table in batches (instead of per row basis)
 
-
 v. 1.2.9, Feb 16, 2015
 - updated jars; improved logging
 
-
 v. 1.2.8, Dec 16, 2014
 - updated jars; added improved QC for annotation qualifiers -- per RGDD-1027
-
 
 v. 1.2.7, Aug 5, 2014
 - annotations with inactive ref_rgd_ids are no longer created - per RGDD-959
@@ -61,44 +52,35 @@ v. 1.2.7, Aug 5, 2014
   given pubmed id, old code picked up associated reference at random, instead of picking up the active one)
 - log deleted stale annotations into file 'GoaDeleted.log'
 
-
 v. 1.2.6, Jul 11, 2014
 - skip from processing IPI annotations to catalytic activity terms - per RGDD-946
-
 
 v. 1.2.5, Jun 23, 2014
 - skipping from processing uninformative annotations to some top-level terms (terms having 'Not4Curation' synonym)
 
-
 v. 1.2.4, Jun 18, 2014
 - skipping from processing uninformative annotations to some top-level terms - per RGDD-934
 
-
 v. 1.2.3, May 20, 2014
 - code refactoring (reduced amount of code, moved some of sql code to rgdcore)
-
 
 v. 1.2.2, May 8, 2014 - per RGDD-919
 - automatic import of references pointed to by processed PubMed ids
 - sped up processing by caching of some data
 
-
 v. 1.2.1, May 7, 2014 - per RGDD-878
 - fixed handling of qualifiers (especially visible for evidence code 'IKR')
-
 
 v. 1.2.0, Apr 21, 2014 - per RGDD-913
 - created_date is updated if needed
 - minor code refactoring to simplify code
 - simplified GOAnnotation.pl script
 
-
 v. 1.1.0, Dec 18, 2013 - per RGDD-859
 - perform custom query to refresh annotations for Olr gene
 - refactored code to replace custom sql code with methods from rgdcore
 - changed logic from drop-nad-reload into incremental update to speed up pipeline and improve annotations stability
 - packaged java code into a standalone jar
-
 
 v. 1.0.3, Dec 28, 2012
   updated rgdcore.jar: unique index on FULL_ANNOT table no longer has fields TERm and EXP_RGD_ID    - per RGDD-555
