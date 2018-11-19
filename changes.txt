@@ -1,3 +1,6 @@
+v. 1.4.7, Nov 19, 2018
+- update url for 'import references tool'
+
 v. 1.4.6, Oct 15, 2018
 - refactored build.gradle to produce lean runnable jar
 

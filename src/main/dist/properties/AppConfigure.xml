@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="GOA rat annotation pipeline v. 1.4.5, Sep 14, 2018" />
+        <property name="version" value="GOA rat annotation pipeline v. 1.4.7, Nov 19, 2018" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
 	    <property name="specialRefRgdId" value="1600115"/>
@@ -34,7 +34,7 @@
           concatenations of log files duplAnnot.log and unMatchedDbObjID.log  -->
         <property name="goaRgdTxt" value="data/goa_rgd.txt" />
 
-        <property name="importPubMedUrl" value="/tools/curation/retrieve.cgi?pmid_list=" />
+        <property name="importPubMedUrl" value="/rgdweb/pubmed/importReferences.html?pmid_list=" />
         <property name="importPubmedToolHost">
             <map>
                 <entry key="travis.rgd.mcw.edu" value="https://dev.rgd.mcw.edu/" />
