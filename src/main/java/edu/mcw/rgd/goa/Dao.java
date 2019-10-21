@@ -9,6 +9,7 @@ import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.datamodel.ontologyx.Term;
+import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.object.MappingSqlQuery;
 
@@ -133,7 +134,10 @@ public class Dao {
         int percentPos = deleteThresholdStr.indexOf('%');
         int deleteThreshold = Integer.parseInt(deleteThresholdStr.substring(0, percentPos));
 
-        Date cutoffDate = new Date(startTime);
+        // set cutoff date to be one hour before the pipeline start
+        // (to handle the case when app server clock time differs from database server clock time)
+        Date cutoffDate = Utils.addHoursToDate(new Date(startTime), -1);
+
         int currentAnnotCount = annotDAO.getCountOfAnnotationsForCreatedBy(createdBy);
         List<Annotation> annotsForDelete = annotDAO.getAnnotationsModifiedBeforeTimestamp(createdBy, cutoffDate);
         Logger logDelete = Logger.getLogger("deleted");

@@ -608,7 +608,7 @@ public class GoAnnotManager {
 
         Set<String> obsoleteRelations = new HashSet<>();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(goRelLocalFile))));
+        BufferedReader reader = Utils.openReader(goRelLocalFile);
         String line;
         boolean isObsolete = false;
         String id = null;

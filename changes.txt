@@ -1,3 +1,6 @@
+Oct 21, 2019
+- fixed potential issue with handling of obsolete annotations
+
 v. 1.4.8, Jan 9, 2019
 - updated build.gradle
 
