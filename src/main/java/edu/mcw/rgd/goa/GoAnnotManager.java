@@ -83,15 +83,21 @@ public class GoAnnotManager {
         new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new FileSystemResource("properties/AppConfigure.xml"));
         GoAnnotManager goAnnotManager=(GoAnnotManager) (bf.getBean("goAnnotManager"));
 
-        goAnnotManager.getLogger().info("----- "+goAnnotManager.getVersion()+" Starts ------");
-      	goAnnotManager.startGoaPipeline();
+        try {
+            goAnnotManager.startGoaPipeline();
+        } catch( Exception e ) {
+            Utils.printStackTrace(e, goAnnotManager.getLogger());
+        }
 	}
 
 	public void startGoaPipeline() throws Exception {
 
+        getLogger().info("----- "+getVersion()+" Starts ------");
+
         dataValidation.setDao(getDao());
 
         int initialAnnotCount = getDao().getCountOfAnnotations();
+        log.info("Initial annotation count in RGD: "+initialAnnotCount);
 
         downloadDataFiles();
 
@@ -106,6 +112,7 @@ public class GoAnnotManager {
 	    log.info("Annotations in incoming GOA file: "+linenum);
         log.info("Annotations matching RGD: "+totDups);
 		log.info("Annotations loaded into RGD: "+totInserted);
+        log.info("Annotations in RGD final count: "+getDao().getCountOfAnnotations());
         if( totTopLevelTermsSkipped>0 )
             log.info("Annotations skipped (uninformative top-level term): "+totTopLevelTermsSkipped);
         if( totCatalyticActivityIPITermsSkipped>0 )
@@ -538,7 +545,7 @@ public class GoAnnotManager {
         downloadGoRelFile();
         downloadInputFiles();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(getLocalFile()))));
+        BufferedReader reader = Utils.openReader(getLocalFile());
 
         // extract NON_RGD records
         // (column 14 must be different than RGD)

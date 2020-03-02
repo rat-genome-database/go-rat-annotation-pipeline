@@ -22,5 +22,5 @@ java -Dspring.config=$APPDIR/../properties/default_db2.xml \
   -Dlog4j.configuration=file://$APPDIR/properties/log4j.properties \
   -jar lib/${APPNAME}.jar "$@" > $APPDIR/run.log
 
-mailx -s "[$SERVER] GOA rat annotation pipeline" < $APPDIR/logs/GoaSum.log
+mailx -s "[$SERVER] GOA rat annotation pipeline" $EMAILLIST < $APPDIR/logs/GoaSum.log
 
