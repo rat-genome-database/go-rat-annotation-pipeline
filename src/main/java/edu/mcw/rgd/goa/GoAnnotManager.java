@@ -74,7 +74,6 @@ public class GoAnnotManager {
     private String goRelFile;
     private Set<Integer> refRgdIdsForGoPipelines;
     private Map<String,String> sourceSubst;
-    private String staleAnnotDeleteThreshold;
     private String threeMonthOldDate;
     private Map<String,String> importPubmedToolHost;
 
@@ -92,13 +91,15 @@ public class GoAnnotManager {
 
         dataValidation.setDao(getDao());
 
+        int initialAnnotCount = getDao().getCountOfAnnotations();
+
         downloadDataFiles();
 
 		run();
 
         wrapUp();
 
-        cleanFullAnnot();
+        cleanFullAnnot(initialAnnotCount);
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -134,8 +135,8 @@ public class GoAnnotManager {
 		rgdLogger.log("GOAnnoationsRat","totalAnnotRemoved",rowDeleted);
 	}
 
-	public void cleanFullAnnot() throws Exception {
-		rowDeleted = dao.deleteFullAnnot(startMilisec, log, getStaleAnnotDeleteThreshold());
+	public void cleanFullAnnot(int initialAnnotCount) throws Exception {
+		rowDeleted = dao.deleteFullAnnot(startMilisec, log, initialAnnotCount);
 		log.info("Stale annotations removed from FULL_ANNOT table: "+rowDeleted);
 	}
 
@@ -757,14 +758,6 @@ public class GoAnnotManager {
 
     public Map<String,String> getSourceSubst() {
         return sourceSubst;
-    }
-
-    public void setStaleAnnotDeleteThreshold(String staleAnnotDeleteThreshold) {
-        this.staleAnnotDeleteThreshold = staleAnnotDeleteThreshold;
-    }
-
-    public String getStaleAnnotDeleteThreshold() {
-        return staleAnnotDeleteThreshold;
     }
 
     public void setImportPubmedToolHost(Map<String,String> importPubmedToolHost) {

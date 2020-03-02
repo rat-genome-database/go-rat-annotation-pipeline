@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="GOA rat annotation pipeline   -- build 2019-10-21" />
+        <property name="version" value="GOA rat annotation pipeline   -- build March 2, 2020" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
 	    <property name="specialRefRgdId" value="1600115"/>
@@ -56,8 +56,6 @@
                 <entry key="UniProtKB" value="UniProt" />
             </map>
         </property>
-
-        <property name="staleAnnotDeleteThreshold" value="5%" />
     </bean>
 		
 	<bean id="dataValidation" class="edu.mcw.rgd.goa.DataValidationImpl">
@@ -66,5 +64,6 @@
     <bean id="dao" class="edu.mcw.rgd.goa.Dao">
         <property name="createdBy" value="69"/>
         <property name="lastModifiedBy" value="69"/>
+        <property name="staleAnnotDeleteThreshold" value="5%" />
     </bean>
 </beans>

@@ -33,6 +33,7 @@ public class Dao {
 
     private int createdBy;
     private int lastModifiedBy;
+    private String staleAnnotDeleteThreshold;
 
     /**
      * return a term by term accession id
@@ -92,6 +93,7 @@ public class Dao {
 
     Map<String,List<GenomicElement>> _cacheGE = new HashMap<>();
 
+    Set<Integer> _refRgdIds = new HashSet<>();
     /**
      * get annotation notes given a list of values that comprise unique key:
      * TERM_ACC+ANNOTATED_OBJECT_RGD_ID+REF_RGD_ID+EVIDENCE+WITH_INFO+QUALIFIER+XREF_SOURCE
@@ -100,6 +102,12 @@ public class Dao {
      * @throws Exception on spring framework dao failure
      */
     public int getAnnotationKeyAndCreationDate(Annotation annot) throws Exception {
+
+        Logger l = Logger.getLogger("test");
+        l.info(annot.dump("|"));
+        if( _refRgdIds.add(annot.getRefRgdId()) ) {
+            System.out.println(_refRgdIds.size()+". getAnnotationKeyAndCreationDate REF_RGD_ID:"+annot.getRefRgdId());
+        }
 
         String query = "SELECT a.full_annot_key,created_date FROM full_annot a WHERE "
                 // fields that are never null
@@ -127,18 +135,23 @@ public class Dao {
         return result[0]==null ? 0 : (int)result[0];
     }
 
-    // remove records from full_annot
-    public int deleteFullAnnot(long startTime, Logger log, String deleteThresholdStr) throws Exception {
+    public int getCountOfAnnotations() throws Exception {
+        return annotDAO.getCountOfAnnotationsForCreatedBy(createdBy);
+    }
+
+    // remove records from full_annot, but if the net annot drop could be greater than 5% threshold,
+    // then abort the deletions and report it
+    public int deleteFullAnnot(long startTime, Logger log, int initialAnnotCount) throws Exception {
 
         // extract delete threshold in percent
-        int percentPos = deleteThresholdStr.indexOf('%');
-        int deleteThreshold = Integer.parseInt(deleteThresholdStr.substring(0, percentPos));
+        int percentPos = getStaleAnnotDeleteThreshold().indexOf('%');
+        int deleteThreshold = Integer.parseInt(getStaleAnnotDeleteThreshold().substring(0, percentPos));
 
         // set cutoff date to be one hour before the pipeline start
         // (to handle the case when app server clock time differs from database server clock time)
         Date cutoffDate = Utils.addHoursToDate(new Date(startTime), -1);
 
-        int currentAnnotCount = annotDAO.getCountOfAnnotationsForCreatedBy(createdBy);
+        int currentAnnotCount = getCountOfAnnotations();
         List<Annotation> annotsForDelete = annotDAO.getAnnotationsModifiedBeforeTimestamp(createdBy, cutoffDate);
         Logger logDelete = Logger.getLogger("deleted");
         for( Annotation a: annotsForDelete ) {
@@ -146,10 +159,13 @@ public class Dao {
         }
         int annotsForDeleteCount = annotsForDelete.size();
         int annotsForDeleteThreshold = (deleteThreshold * currentAnnotCount) / 100; // 5% delete threshold
-        if( annotsForDeleteCount > annotsForDeleteThreshold ) {
-            log.warn(" STALE ANNOTATIONS DELETE THRESHOLD ("+deleteThresholdStr+") -- "+annotsForDeleteThreshold);
+
+        int newAnnotCount = currentAnnotCount - annotsForDeleteCount;
+        if( initialAnnotCount - newAnnotCount > annotsForDeleteThreshold ) {
+
+            log.warn(" STALE ANNOTATIONS DELETE THRESHOLD ("+getStaleAnnotDeleteThreshold()+") -- "+annotsForDeleteThreshold);
             log.warn(" STALE ANNOTATIONS TAGGED FOR DELETE     -- "+annotsForDeleteCount);
-            log.warn(" STALE ANNOTATIONS DELETE THRESHOLD ("+deleteThresholdStr+") EXCEEDED -- no annotations deleted");
+            log.warn(" STALE ANNOTATIONS DELETE THRESHOLD ("+getStaleAnnotDeleteThreshold()+") EXCEEDED -- no annotations deleted");
             return 0;
         }
 
@@ -203,22 +219,6 @@ public class Dao {
         return xdbIdDAO.getRefIdByPubMedId(pubmedId);
     }
 
-    public int getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(int createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public int getLastModifiedBy() {
-        return lastModifiedBy;
-    }
-
-    public void setLastModifiedBy(int lastModifiedBy) {
-        this.lastModifiedBy = lastModifiedBy;
-    }
-
     /**
      * Check if a term can be used for curation.
      * @param termAcc term ACC id
@@ -252,4 +252,30 @@ public class Dao {
         return _ontologyQualifiers;
     }
     private Set<String> _ontologyQualifiers = null;
+
+
+    public int getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(int createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public int getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(int lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    public void setStaleAnnotDeleteThreshold(String staleAnnotDeleteThreshold) {
+        this.staleAnnotDeleteThreshold = staleAnnotDeleteThreshold;
+    }
+
+    public String getStaleAnnotDeleteThreshold() {
+        return staleAnnotDeleteThreshold;
+    }
+
 }
