@@ -50,6 +50,7 @@ public class GoAnnotManager {
     int IEA_GO_annotsWithUpdatedCreatedDate=0;
     int IEA_GO_annotsWithUntouchedCreatedDate=0;
     int dataSourceSubstitutions = 0;
+    int skippedAnnots = 0;
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
@@ -96,7 +97,7 @@ public class GoAnnotManager {
 
         dataValidation.setDao(getDao());
 
-        int initialAnnotCount = getDao().getCountOfAnnotations();
+        int initialAnnotCount = dataValidation.loadPipelineAnnotations();
         log.info("Initial annotation count in RGD: "+initialAnnotCount);
 
         downloadDataFiles();
@@ -117,6 +118,8 @@ public class GoAnnotManager {
             log.info("Annotations skipped (uninformative top-level term): "+totTopLevelTermsSkipped);
         if( totCatalyticActivityIPITermsSkipped>0 )
             log.info("Annotations skipped (catalytic activity IPI terms): "+totCatalyticActivityIPITermsSkipped);
+        if( skippedAnnots>0 )
+            log.info("Annotations skipped (matching annotations from other pipelines): "+skippedAnnots);
         log.info("Annotations with removed obsolete relations: "+dataValidation.getAnnotationsWithRemovedObsoleteRelations());
         log.info("  total count of removed obsolete relations: "+dataValidation.getCountOfRemovedObsoleteRelations());
 		log.info("-------------------------------------------------------");
@@ -406,21 +409,18 @@ public class GoAnnotManager {
 
         for( GenomicElement geneInfo: geneInfos ){
             setFullAnnotBean(fullAnnot, geneInfo);
-            int rid= geneInfo.getRgdId();
-            fullAnnot.setAnnotatedObjectRgdId(rid);
+            fullAnnot.setAnnotatedObjectRgdId(geneInfo.getRgdId());
 
-            int fullAnnotKey = dataValidation.checkDuplications(fullAnnot);
-            if( fullAnnotKey <= 0 ) {
+            if( dataValidation.insertIfNew(fullAnnot) ) {
                 // do actual load
-                dao.insertFullAnnot(fullAnnot);
                 totInserted++;
-                logLoaded.info("insert successful\tRGD_ID="+rid+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
+                logLoaded.info("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
 
                 // fix created-date (inserting annotation will create a new created-date)
                 String createdDate = dateFormat.format(fullAnnot.getCreatedDate());
                 ratGeneAssoc.setCreatedDate(createdDate);
             }
-            else {
+            else if( fullAnnot.getKey()!=null && fullAnnot.getKey()!=0 ){
                 totDups++;
 
                 // fix created-date (annotation in RGD could have a different created-date)
@@ -428,7 +428,10 @@ public class GoAnnotManager {
                 ratGeneAssoc.setCreatedDate(createdDate);
 
                 writeLogfile(logDuplAnnot, ratGeneAssoc);
-                dao.updateLastModified(fullAnnotKey);
+                dao.updateLastModified(fullAnnot.getKey());
+            } else {
+                skippedAnnots++;
+                return true;
             }
 
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
@@ -589,15 +592,20 @@ public class GoAnnotManager {
 
     void wrapUp() throws IOException {
 
+        Set<String> uniqueLines = new TreeSet<>();
+        appendFile("logs/duplAnnot.log", uniqueLines);
+        appendFile("logs/unMatchedDbObjID.log", uniqueLines);
+
         BufferedWriter goaFile = new BufferedWriter(new FileWriter(this.getGoaRgdTxt()));
-
-        appendFile("logs/duplAnnot.log", goaFile);
-        appendFile("logs/unMatchedDbObjID.log", goaFile);
-
+        for( String gafLine: uniqueLines ) {
+            goaFile.write(gafLine);
+        }
         goaFile.close();
+
+        log.info("Line count in goa_rgd.txt: " + uniqueLines.size());
     }
 
-    void appendFile(String inFile, BufferedWriter outFile) throws IOException {
+    void appendFile(String inFile, Set<String> lineSet) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inFile));
         String line;
 
@@ -605,8 +613,8 @@ public class GoAnnotManager {
 
             int tabPos = line.indexOf('\t');
             if( tabPos >= 0 ) {
-                outFile.write(line.substring(tabPos+1));
-                outFile.newLine();
+                String gafLine = line.substring(tabPos+1)+"\n";
+                lineSet.add(gafLine);
             }
         }
         reader.close();

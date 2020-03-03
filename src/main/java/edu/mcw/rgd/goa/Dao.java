@@ -86,53 +86,32 @@ public class Dao {
         List<GenomicElement> list = _cacheGE.get(key);
         if( list==null ) {
             list = genomicElementDAO.getElementsByAccId(accid, xdbkey, RgdId.OBJECT_KEY_GENES, SpeciesType.RAT);
+
+            // remove non-active objects
+            Iterator<GenomicElement> it = list.iterator();
+            while( it.hasNext() ) {
+                GenomicElement ge = it.next();
+                if( !Utils.stringsAreEqualIgnoreCase(ge.getObjectStatus(), "ACTIVE") ) {
+                    it.remove();
+                }
+            }
+
             _cacheGE.put(key, list);
         }
         return list;
     }
+    private Map<String,List<GenomicElement>> _cacheGE = new HashMap<>();
 
-    Map<String,List<GenomicElement>> _cacheGE = new HashMap<>();
-
-    Set<Integer> _refRgdIds = new HashSet<>();
     /**
-     * get annotation notes given a list of values that comprise unique key:
-     * TERM_ACC+ANNOTATED_OBJECT_RGD_ID+REF_RGD_ID+EVIDENCE+WITH_INFO+QUALIFIER+XREF_SOURCE
-     * @param annot Annotation object with the following fields set: TERM_ACC+ANNOTATED_OBJECT_RGD_ID+REF_RGD_ID+EVIDENCE+WITH_INFO+QUALIFIER+XREF_SOURCE
-     * @return Annotation object with annot_key and notes field set, or null if invalid key
+     * get all annotations created by the pipeline in FULL_ANNOT table (for CREATED_BY=69)
+     *
+     * @return list of annotations
      * @throws Exception on spring framework dao failure
      */
-    public int getAnnotationKeyAndCreationDate(Annotation annot) throws Exception {
+    public List<Annotation> getAllAnnotations() throws Exception{
 
-        Logger l = Logger.getLogger("test");
-        l.info(annot.dump("|"));
-        if( _refRgdIds.add(annot.getRefRgdId()) ) {
-            System.out.println(_refRgdIds.size()+". getAnnotationKeyAndCreationDate REF_RGD_ID:"+annot.getRefRgdId());
-        }
-
-        String query = "SELECT a.full_annot_key,created_date FROM full_annot a WHERE "
-                // fields that are never null
-                +"term_acc=? AND annotated_object_rgd_id=? AND evidence=? AND "
-                // fields that could be null
-                +"NVL(ref_rgd_id,0) = NVL(?,0) AND "
-                +"NVL(with_info,'*') = NVL(?,'*') AND "
-                +"NVL(qualifier,'*') = NVL(?,'*') AND "
-                +"NVL(xref_source,'*') = NVL(?,'*')";
-
-        final Object[] result = new Object[2];
-        MappingSqlQuery q = new MappingSqlQuery(annotDAO.getDataSource(), query) {
-
-            @Override
-            protected Object mapRow(ResultSet rs, int i) throws SQLException {
-                result[0] = rs.getInt(1);
-                result[1] = rs.getTimestamp(2);
-                return null;
-            }
-        };
-
-        annotDAO.execute(q, annot.getTermAcc(), annot.getAnnotatedObjectRgdId(), annot.getEvidence(),
-                annot.getRefRgdId(), annot.getWithInfo(), annot.getQualifier(), annot.getXrefSource());
-        annot.setCreatedDate((Date)result[1]);
-        return result[0]==null ? 0 : (int)result[0];
+        final Date dtTomorrow = Utils.addDaysToDate(new Date(), 1);
+        return annotDAO.getAnnotationsModifiedBeforeTimestamp(getCreatedBy(), dtTomorrow);
     }
 
     public int getCountOfAnnotations() throws Exception {
@@ -180,13 +159,18 @@ public class Dao {
      * @param fa Annotation object
      * @throws Exception on spring framework dao failure
      */
-    public void insertFullAnnot(Annotation fa) throws Exception {
+    public boolean insertFullAnnot(Annotation fa) throws Exception {
 
         fa.setRefRgdId(fa.getRefRgdId()==null ? null : fa.getRefRgdId() > 0 ? fa.getRefRgdId() : null);
         fa.setCreatedBy(createdBy);
         fa.setLastModifiedBy(lastModifiedBy);
 
-        annotDAO.insertAnnotation(fa);
+        try {
+            annotDAO.insertAnnotation(fa);
+            return true;
+        } catch(java.sql.SQLIntegrityConstraintViolationException e) {
+            return false;
+        }
     }
 
     // update LAST_MODIFIED_DATE in batches of up to 1000 rows

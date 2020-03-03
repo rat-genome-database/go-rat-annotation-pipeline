@@ -21,11 +21,17 @@ public class DataValidationImpl {
     private Set<String> obsoleteRelations; // obsolete relations loaded from gorel.obo
     private int annotationsWithRemovedObsoleteRelations = 0;
     private int countOfRemovedObsoleteRelations = 0;
+    private AnnotCache annotCache = new AnnotCache();
 
     private Logger logObsoleteRelInAnnotExt = Logger.getLogger("obsoleteRelInAnnotExt");
+    private Logger logSkippedAnnots = Logger.getLogger("skippedAnnots");
+
+    public int loadPipelineAnnotations() throws Exception {
+        return annotCache.loadAnnotations(dao);
+    }
 
     public List<GenomicElement> checkDbObjectId (RatGeneAssoc rga) throws Exception {
-		ArrayList<GenomicElement> rgdinfo=new ArrayList<>();
+
 		int xdbKey=0;
 		String db=rga.getDb();
         boolean usedGeneProductFormId = false;
@@ -61,26 +67,35 @@ public class DataValidationImpl {
         if (usedGeneProductFormId && geneRgdInfo.isEmpty() ) {
             geneRgdInfo=dao.queryGeneRgdInfoByAccid(rga.getDbObjectId(),xdbKey);
         }
-		// multiple rgdids may be returned
-
-		// remove non-active genes
-        for (GenomicElement ge: geneRgdInfo) {
-            if( ge.getObjectStatus().equalsIgnoreCase("ACTIVE") ) {
-                rgdinfo.add(ge);
-            }
-        }
-		return rgdinfo;
+		return geneRgdInfo;
 	}
 
     /**
-     * check if given annotation is already in RGD
-     * @param annot Annotation object
-     * @return full_annot_key if the incoming object is unique (not a duplicate), or 0 otherwise
+     *
+     * @param annot
+     * @return true if new annotation has been inserted
      * @throws Exception
      */
-	public int checkDuplications(Annotation annot) throws Exception {
-		return dao.getAnnotationKeyAndCreationDate(annot);
-	}
+    synchronized public boolean insertIfNew(Annotation annot) throws Exception {
+
+        Annotation annotInRgd = annotCache.getAnnotInRgd(annot);
+        if( annotInRgd==null ) {
+            if( dao.insertFullAnnot(annot) ) {
+                annotCache.insert(annot);
+                return true;
+            } else {
+                logSkippedAnnots.info(annot.dump("|"));
+                return false;
+            }
+        }
+
+        annot.setKey(annotInRgd.getKey());
+        annot.setCreatedDate(annotInRgd.getCreatedDate());
+        annot.setCreatedBy(annotInRgd.getCreatedBy());
+        annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
+        annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
+        return false;
+    }
 
     public void validateExtensionRelations(RatGeneAssoc rga) {
 
