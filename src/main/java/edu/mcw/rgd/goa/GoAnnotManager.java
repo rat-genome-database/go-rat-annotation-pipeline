@@ -5,10 +5,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import edu.mcw.rgd.datamodel.GenomicElement;
+import edu.mcw.rgd.datamodel.Gene;
+import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
@@ -351,7 +351,7 @@ public class GoAnnotManager {
 		if(fullAnnot!=null) {
 			// multiple values may returned
             log.debug("DbObjectId "+rec.getDb()+" - "+rec.getDbObjectId());
-			List<GenomicElement> geneInfo=dataValidation.checkDbObjectId(rec);
+			List<Gene> geneInfo=dataValidation.checkDbObjectId(rec);
 
 			//Does $DB_Object_ID = any Swiss-Prot/UniProt/GenBank protein ID in RGD (RGD_ACC_XDB table)?
 			if(geneInfo.size()> 0) {
@@ -376,7 +376,7 @@ public class GoAnnotManager {
         return true;
 	}
 	
-	public boolean qcChecksForMatchedDbObjectId(List<GenomicElement> geneInfos, Annotation fullAnnot, RatGeneAssoc ratGeneAssoc) throws Exception {
+	public boolean qcChecksForMatchedDbObjectId(List<Gene> geneInfos, Annotation fullAnnot, RatGeneAssoc ratGeneAssoc) throws Exception {
 	
         setFullAnnotBean(fullAnnot, ratGeneAssoc);
 
@@ -407,7 +407,7 @@ public class GoAnnotManager {
         ratGeneAssoc.setRefRgdId(fullAnnot.getRefRgdId());
 
 
-        for( GenomicElement geneInfo: geneInfos ){
+        for( Gene geneInfo: geneInfos ){
             setFullAnnotBean(fullAnnot, geneInfo);
             fullAnnot.setAnnotatedObjectRgdId(geneInfo.getRgdId());
 
@@ -489,12 +489,12 @@ public class GoAnnotManager {
     }
     SimpleDateFormat sdt = new SimpleDateFormat("yyyyMMdd");
 
-    public void setFullAnnotBean(Annotation fullAnnot, GenomicElement geneInfo) {
+    public void setFullAnnotBean(Annotation fullAnnot, Gene geneInfo) {
 
         fullAnnot.setAnnotatedObjectRgdId(geneInfo.getRgdId());
         fullAnnot.setObjectName(geneInfo.getName());
         fullAnnot.setObjectSymbol(geneInfo.getSymbol());
-        fullAnnot.setRgdObjectKey(geneInfo.getObjectKey());
+        fullAnnot.setRgdObjectKey(RgdId.OBJECT_KEY_GENES);
     }
 
 	public void setFullAnnotBean(Annotation fullAnnot, RatGeneAssoc ratGeneAssoc) {
@@ -532,7 +532,7 @@ public class GoAnnotManager {
 
             String localFile = downloader.download();
             log.info("downloaded "+downloader.getLocalFile());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(localFile))));
+            BufferedReader reader = Utils.openReader(localFile);
             String line;
             while( (line=reader.readLine())!=null ) {
                 out.write(line);

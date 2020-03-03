@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import edu.mcw.rgd.datamodel.GenomicElement;
+import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.Utils;
 
@@ -30,7 +30,7 @@ public class DataValidationImpl {
         return annotCache.loadAnnotations(dao);
     }
 
-    public List<GenomicElement> checkDbObjectId (RatGeneAssoc rga) throws Exception {
+    public List<Gene> checkDbObjectId (RatGeneAssoc rga) throws Exception {
 
 		int xdbKey=0;
 		String db=rga.getDb();
@@ -63,7 +63,7 @@ public class DataValidationImpl {
             xdbKey = 27;
 		}
 
-        List<GenomicElement> geneRgdInfo=dao.queryGeneRgdInfoByAccid(dbObjectId,xdbKey);
+        List<Gene> geneRgdInfo=dao.queryGeneRgdInfoByAccid(dbObjectId,xdbKey);
         if (usedGeneProductFormId && geneRgdInfo.isEmpty() ) {
             geneRgdInfo=dao.queryGeneRgdInfoByAccid(rga.getDbObjectId(),xdbKey);
         }

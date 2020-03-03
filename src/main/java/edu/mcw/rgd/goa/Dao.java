@@ -1,20 +1,13 @@
 package edu.mcw.rgd.goa;
 
-import edu.mcw.rgd.dao.impl.AnnotationDAO;
-import edu.mcw.rgd.dao.impl.GenomicElementDAO;
-import edu.mcw.rgd.dao.impl.OntologyXDAO;
-import edu.mcw.rgd.dao.impl.XdbIdDAO;
-import edu.mcw.rgd.datamodel.GenomicElement;
-import edu.mcw.rgd.datamodel.RgdId;
+import edu.mcw.rgd.dao.impl.*;
+import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.datamodel.ontologyx.Term;
 import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.object.MappingSqlQuery;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -27,7 +20,6 @@ public class Dao {
     private final Logger logger = Logger.getLogger(getClass());
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
-    private GenomicElementDAO genomicElementDAO = new GenomicElementDAO();
     private OntologyXDAO ontDAO = new OntologyXDAO();
     private XdbIdDAO xdbIdDAO = new XdbIdDAO();
 
@@ -78,20 +70,20 @@ public class Dao {
      * @return List of RgdIds objects; if no match, empty list is returned; note: result is never null
      * @throws Exception
      */
-    public List<GenomicElement> queryGeneRgdInfoByAccid(String accid, int xdbkey) throws Exception {
+    public List<Gene> queryGeneRgdInfoByAccid(String accid, int xdbkey) throws Exception {
 
         accid = accid.trim();
 
         String key = xdbkey+"+"+accid;
-        List<GenomicElement> list = _cacheGE.get(key);
+        List<Gene> list = _cacheGE.get(key);
         if( list==null ) {
-            list = genomicElementDAO.getElementsByAccId(accid, xdbkey, RgdId.OBJECT_KEY_GENES, SpeciesType.RAT);
+            list = xdbIdDAO.getActiveGenesByXdbId(xdbkey, accid);
 
-            // remove non-active objects
-            Iterator<GenomicElement> it = list.iterator();
+            // remove non-rat objects
+            Iterator<Gene> it = list.iterator();
             while( it.hasNext() ) {
-                GenomicElement ge = it.next();
-                if( !Utils.stringsAreEqualIgnoreCase(ge.getObjectStatus(), "ACTIVE") ) {
+                Gene ge = it.next();
+                if( ge.getSpeciesTypeKey()!=SpeciesType.RAT ) {
                     it.remove();
                 }
             }
@@ -100,7 +92,7 @@ public class Dao {
         }
         return list;
     }
-    private Map<String,List<GenomicElement>> _cacheGE = new HashMap<>();
+    private Map<String,List<Gene>> _cacheGE = new HashMap<>();
 
     /**
      * get all annotations created by the pipeline in FULL_ANNOT table (for CREATED_BY=69)
