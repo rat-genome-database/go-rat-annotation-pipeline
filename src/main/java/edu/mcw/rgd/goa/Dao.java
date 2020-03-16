@@ -201,9 +201,19 @@ public class Dao {
      * @return true if the term doesn't have a "Not4Curation" synonym
      * @throws Exception if something wrong happens in spring framework
      */
-    public boolean isForCuration(String termAcc) throws Exception {
-        return ontDAO.isForCuration(termAcc);
+    synchronized public boolean isForCuration(String termAcc) throws Exception {
+        if( _not4CurationTermAccs==null ) {
+            Set<String> result = new HashSet<>();
+            result.addAll(ontDAO.getNot4CurationTermAccs("BP"));
+            result.addAll(ontDAO.getNot4CurationTermAccs("CC"));
+            result.addAll(ontDAO.getNot4CurationTermAccs("MF"));
+
+            _not4CurationTermAccs = result;
+        }
+        return !_not4CurationTermAccs.contains(termAcc);
     }
+    private Set<String> _not4CurationTermAccs;
+
 
     /**
      * check if a given term is a catalytic activity term GO:0003824, or a child of catalytic activity term

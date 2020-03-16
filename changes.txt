@@ -1,3 +1,6 @@
+Mar 16, 2020
+- refactored code to address 1 out of 4 bottlenecks: isNot4Curation checks
+
 Mar 03, 2020
 - refactored code to address major bottleneck: annot checks in RGD
 - generated file goa_rgd.txt no longer contains duplicates and is sorted alphabetically
