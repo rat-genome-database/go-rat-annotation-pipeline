@@ -33,9 +33,19 @@ public class Dao {
      * @return a term, or null if term accession id is invalid
      * @throws Exception
      */
-    public Term getTermByAccId(String termAcc) throws Exception {
-        return ontDAO.getTermByAccId(termAcc);
+    synchronized public Term getTermByAccId(String termAcc) throws Exception {
+
+        Term term = _cacheTerms.get(termAcc);
+        if( term==null ) {
+            term = ontDAO.getTermByAccId(termAcc);
+            if( term!=null ) {
+                _cacheTerms.put(termAcc, term);
+            }
+        }
+
+        return term;
     }
+    private Map<String,Term> _cacheTerms = new HashMap<>();
 
     /** given term accession return a term object
      * @param termAcc term accession id
@@ -44,14 +54,7 @@ public class Dao {
      */
     public Annotation queryTermInfoByTermAcc(String termAcc) throws Exception {
 
-        Term term = _cacheTerms.get(termAcc);
-        if( term==null ) {
-            term = getTermByAccId(termAcc);
-            if( term!=null ) {
-                _cacheTerms.put(termAcc, term);
-            }
-        }
-
+        Term term = getTermByAccId(termAcc);
         if( term==null )
             return null;
 
@@ -61,7 +64,6 @@ public class Dao {
         return fa;
     }
 
-    private Map<String,Term> _cacheTerms = new HashMap<>();
 
     /**
      * return gene info given accession id
@@ -163,6 +165,14 @@ public class Dao {
         } catch(java.sql.SQLIntegrityConstraintViolationException e) {
             return false;
         }
+    }
+
+    public void updateFullAnnot(Annotation fa) throws Exception {
+
+        fa.setRefRgdId(fa.getRefRgdId()==null ? null : fa.getRefRgdId() > 0 ? fa.getRefRgdId() : null);
+        fa.setLastModifiedBy(lastModifiedBy);
+
+        annotDAO.updateAnnotation(fa);
     }
 
     // update LAST_MODIFIED_DATE in batches of up to 1000 rows

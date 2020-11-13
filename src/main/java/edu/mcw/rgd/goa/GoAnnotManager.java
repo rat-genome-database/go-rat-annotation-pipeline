@@ -51,6 +51,7 @@ public class GoAnnotManager {
     int IEA_GO_annotsWithUntouchedCreatedDate=0;
     int dataSourceSubstitutions = 0;
     int skippedAnnots = 0;
+    int updatedAnnots = 0;
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
@@ -113,6 +114,9 @@ public class GoAnnotManager {
 	    log.info("Annotations in incoming GOA file: "+linenum);
         log.info("Annotations matching RGD: "+totDups);
 		log.info("Annotations loaded into RGD: "+totInserted);
+        if( updatedAnnots!=0 ) {
+            log.info("Annotations updated into RGD: "+updatedAnnots);
+        }
         log.info("Annotations in RGD final count: "+getDao().getCountOfAnnotations());
         if( totTopLevelTermsSkipped>0 )
             log.info("Annotations skipped (uninformative top-level term): "+totTopLevelTermsSkipped);
@@ -411,8 +415,10 @@ public class GoAnnotManager {
             setFullAnnotBean(fullAnnot, geneInfo);
             fullAnnot.setAnnotatedObjectRgdId(geneInfo.getRgdId());
 
-            if( dataValidation.insertIfNew(fullAnnot) ) {
-                // do actual load
+            int code; // 0 - up-to-date; 1 - skipped; 2 - inserted; 3 - updated
+            code = dataValidation.upsert(fullAnnot);
+
+            if( code==2 ) { // inserted
                 totInserted++;
                 logLoaded.info("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
 
@@ -420,7 +426,9 @@ public class GoAnnotManager {
                 String createdDate = dateFormat.format(fullAnnot.getCreatedDate());
                 ratGeneAssoc.setCreatedDate(createdDate);
             }
-            else if( fullAnnot.getKey()!=null && fullAnnot.getKey()!=0 ){
+            else if( code==3 ) { // updated
+                updatedAnnots++;
+            } else if( code==0 ){ // up-to-date
                 totDups++;
 
                 // fix created-date (annotation in RGD could have a different created-date)
@@ -429,9 +437,11 @@ public class GoAnnotManager {
 
                 writeLogfile(logDuplAnnot, ratGeneAssoc);
                 dao.updateLastModified(fullAnnot.getKey());
-            } else {
+            } else if( code==1 ){
                 skippedAnnots++;
                 return true;
+            } else {
+                throw new Exception("unexpected code="+code);
             }
 
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
@@ -506,6 +516,8 @@ public class GoAnnotManager {
 		fullAnnot.setDataSrc(ratGeneAssoc.getAssignedBy());
 		fullAnnot.setNotes(ratGeneAssoc.getDbReferences());
         fullAnnot.setQualifier(ratGeneAssoc.getQualifier());
+        fullAnnot.setAnnotationExtension(ratGeneAssoc.getAnnotationExtension());
+        fullAnnot.setGeneProductFormId(ratGeneAssoc.getGeneProductFormId());
 	}
 
     void downloadGoRelFile() throws Exception {

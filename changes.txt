@@ -1,3 +1,7 @@
+Nov 13, 2020
+- added code to load GAF columns 16 and 17 ('annotation extension' and 'gene product form id')
+  from source gaf files into table FULL_ANNOT
+
 Mar 16, 2020
 - refactored code to address 1 out of 4 bottlenecks: isNot4Curation checks
 

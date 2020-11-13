@@ -25,6 +25,7 @@ public class DataValidationImpl {
 
     private Logger logObsoleteRelInAnnotExt = Logger.getLogger("obsoleteRelInAnnotExt");
     private Logger logSkippedAnnots = Logger.getLogger("skippedAnnots");
+    private Logger logUpdatedAnnots = Logger.getLogger("updatedAnnots");
 
     public int loadPipelineAnnotations() throws Exception {
         return annotCache.loadAnnotations(dao);
@@ -95,6 +96,45 @@ public class DataValidationImpl {
         annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
         annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
         return false;
+    }
+
+    /**
+     *
+     * @param annot
+     * @return 0 - up-to-date; 1 - skipped; 2 - inserted; 3 - updated
+     * @throws Exception
+     */
+    synchronized public int upsert(Annotation annot) throws Exception {
+
+        Annotation annotInRgd = annotCache.getAnnotInRgd(annot);
+        if( annotInRgd==null ) {
+            if( dao.insertFullAnnot(annot) ) {
+                annotCache.insert(annot);
+                return 2;
+            } else {
+                logSkippedAnnots.info(annot.dump("|"));
+                return 1;
+            }
+        }
+
+        annot.setKey(annotInRgd.getKey());
+        annot.setCreatedDate(annotInRgd.getCreatedDate());
+        annot.setCreatedBy(annotInRgd.getCreatedBy());
+
+        if( Utils.stringsAreEqualIgnoreCase(annot.getAnnotationExtension(), annotInRgd.getAnnotationExtension()) &&
+            Utils.stringsAreEqualIgnoreCase(annot.getGeneProductFormId(), annotInRgd.getGeneProductFormId()) ) {
+
+            // up-to-date
+            annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
+            annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
+            return 0;
+        }
+
+        logUpdatedAnnots.debug("RGD:"+annot.getAnnotatedObjectRgdId()+"; "+annot.getTermAcc()+"; "+annot.getRefRgdId()
+            +"\nANNOTATION_EXTENSION OLD["+annotInRgd.getAnnotationExtension()+"] NEW ["+annot.getAnnotationExtension()+"]"
+            +"\nGENE_PRODUCT_FORM_ID OLD["+annotInRgd.getGeneProductFormId()+"] NEW ["+annot.getGeneProductFormId()+"]");
+        dao.updateFullAnnot(annot);
+        return 3;
     }
 
     public void validateExtensionRelations(RatGeneAssoc rga) {
