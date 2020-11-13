@@ -1,6 +1,7 @@
 package edu.mcw.rgd.goa;
 
 import edu.mcw.rgd.dao.impl.*;
+import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
@@ -17,10 +18,12 @@ import java.util.*;
  */
 public class Dao {
 
+    private final Logger log = Logger.getLogger("GoaSummary");
     private final Logger logger = Logger.getLogger(getClass());
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
     private OntologyXDAO ontDAO = new OntologyXDAO();
+    private ReferenceDAO referenceDAO = new ReferenceDAO();
     private XdbIdDAO xdbIdDAO = new XdbIdDAO();
 
     private int createdBy;
@@ -175,9 +178,13 @@ public class Dao {
         annotDAO.updateAnnotation(fa);
     }
 
-    // update LAST_MODIFIED_DATE in batches of up to 1000 rows
-    public void initUpdates() {
+    public void init() throws Exception {
+        // update LAST_MODIFIED_DATE in batches of up to 1000 rows
         _updateLastModified = new ArrayList<>(1000);
+
+        // preload map of PMID ids to RefRgdId
+        int cnt = loadPmidAndRefRgdIdMap();
+        log.info("PMID and RefRgdId map preloaded: "+cnt);
     }
 
     public void finalizeUpdates() throws Exception {
@@ -200,10 +207,20 @@ public class Dao {
     private List<Integer> _updateLastModified = null;
 
 
+    public int loadPmidAndRefRgdIdMap() throws Exception {
+        _pmidRefRgdIdMap = new HashMap<>();
 
-    public int getRefIdByPubMed(String pubmedId) throws Exception {
-        return xdbIdDAO.getRefIdByPubMedId(pubmedId);
+        for( IntStringMapQuery.MapPair p: referenceDAO.getPubmedIdsAndRefRgdIds() ) {
+            _pmidRefRgdIdMap.put(p.stringValue, p.keyValue);
+        }
+        return _pmidRefRgdIdMap.size();
     }
+
+    public Integer getRefIdByPubMed(String pubmedId) {
+        return _pmidRefRgdIdMap.get(pubmedId);
+    }
+    Map<String,Integer> _pmidRefRgdIdMap;
+
 
     /**
      * Check if a term can be used for curation.

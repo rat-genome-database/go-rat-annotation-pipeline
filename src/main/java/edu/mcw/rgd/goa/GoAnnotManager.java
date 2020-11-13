@@ -173,7 +173,8 @@ public class GoAnnotManager {
 		log.debug("start parsing the input file");
 		String strLine;
 
-        dao.initUpdates();
+		// preload some data for better performance
+        dao.init();
 
         // Open the file ("data/goa_rat")
         BufferedReader br = new BufferedReader(new FileReader(getGoaFile()));
