@@ -1,3 +1,7 @@
+Nov 23, 2020
+- incoming file parser replaces MGI:MGI:xxxxxxx with MGI:xxxxxxx
+- improved logging
+
 Nov 13, 2020
 - added code to load GAF columns 16 and 17 ('annotation extension' and 'gene product form id')
   from source gaf files into table FULL_ANNOT

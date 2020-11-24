@@ -10,6 +10,7 @@ import java.util.zip.GZIPOutputStream;
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
+import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
 import org.apache.log4j.Logger;
@@ -36,22 +37,9 @@ public class GoAnnotManager {
 	RGDSpringLogger rgdLogger = new RGDSpringLogger();
     String goRelLocalFile;
 
-
     int specialRefRgdId;
-	int rowDeleted=0;
-	int totInserted=0;
-	int linenum=0;
-	int totDups=0; // # annots: incoming annot matching annot in RGD
-	int totUnPubmed=0;
-	int totUnGoid=0;
-	int totUnObjid=0;
-    int totTopLevelTermsSkipped=0;
-    int totCatalyticActivityIPITermsSkipped=0;
-    int IEA_GO_annotsWithUpdatedCreatedDate=0;
-    int IEA_GO_annotsWithUntouchedCreatedDate=0;
-    int dataSourceSubstitutions = 0;
-    int skippedAnnots = 0;
-    int updatedAnnots = 0;
+    CounterPool counters;
+
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
@@ -89,6 +77,7 @@ public class GoAnnotManager {
             goAnnotManager.startGoaPipeline();
         } catch( Exception e ) {
             Utils.printStackTrace(e, goAnnotManager.getLogger());
+            goAnnotManager.getLogger().info( goAnnotManager.counters.dumpAlphabetically() );
         }
 	}
 
@@ -97,6 +86,7 @@ public class GoAnnotManager {
         getLogger().info("----- "+getVersion()+" Starts ------");
 
         dataValidation.setDao(getDao());
+        counters = new CounterPool();
 
         int initialAnnotCount = dataValidation.loadPipelineAnnotations();
         log.info("Initial annotation count in RGD: "+initialAnnotCount);
@@ -108,6 +98,21 @@ public class GoAnnotManager {
         wrapUp();
 
         cleanFullAnnot(initialAnnotCount);
+
+        int linenum = counters.get("linenum");
+        int totDups = counters.get("totDups");
+        int totInserted = counters.get("totInserted");
+        int updatedAnnots = counters.get("updatedAnnots");
+        int totTopLevelTermsSkipped = counters.get("totTopLevelTermsSkipped");
+        int totCatalyticActivityIPITermsSkipped = counters.get("totCatalyticActivityIPITermsSkipped");
+        int skippedAnnots = counters.get("skippedAnnots");
+        int totUnPubmed = counters.get("totUnPubmed");
+        int totUnObjid = counters.get("totUnObjid");
+        int totUnGoid = counters.get("totUnGoid");
+        int IEA_GO_annotsWithUpdatedCreatedDate = counters.get("IEA_GO_annotsWithUpdatedCreatedDate");
+        int IEA_GO_annotsWithUntouchedCreatedDate = counters.get("IEA_GO_annotsWithUntouchedCreatedDate");
+        int dataSourceSubstitutions = counters.get("dataSourceSubstitutions");
+        int rowDeleted = counters.get("rowDeleted");
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -150,8 +155,9 @@ public class GoAnnotManager {
 	}
 
 	public void cleanFullAnnot(int initialAnnotCount) throws Exception {
-		rowDeleted = dao.deleteFullAnnot(startMilisec, log, initialAnnotCount);
+		int rowDeleted = dao.deleteFullAnnot(startMilisec, log, initialAnnotCount);
 		log.info("Stale annotations removed from FULL_ANNOT table: "+rowDeleted);
+		counters.add("rowDeleted", rowDeleted);
 	}
 
 
@@ -171,58 +177,23 @@ public class GoAnnotManager {
         processGoRelObo();
 
 		log.debug("start parsing the input file");
-		String strLine;
 
 		// preload some data for better performance
         dao.init();
 
-        // Open the file ("data/goa_rat")
-        BufferedReader br = new BufferedReader(new FileReader(getGoaFile()));
-
         // lines with PubMed ids that do not have references in RGD
         List<RatGeneAssoc> noPubMedEntries = new ArrayList<>();
 
-        int invalidLines = 0;
-        while ((strLine = br.readLine()) != null)   {
+        // parse file ("data/goa_rat")
+        List<RatGeneAssoc> incomingRecords = loadIncomingRecords();
 
-            linenum++;
-            String tokens[] = strLine.split("[\\t]", -1);
-            if( tokens.length!=17 ) {
-                invalidLines++;
-                continue;
-            }
-
-            RatGeneAssoc ratGeneAssoc = new RatGeneAssoc();
-            ratGeneAssoc.setDb(tokens[0]);
-            ratGeneAssoc.setDbObjectId(tokens[1]);
-            ratGeneAssoc.setDbObjectSymbol(tokens[2]);
-            ratGeneAssoc.setQualifier(qcQualifier(tokens[3]));
-            ratGeneAssoc.setGoId(tokens[4]);
-            ratGeneAssoc.setDbReferences(tokens[5]);
-            ratGeneAssoc.setEvidence(tokens[6]);
-            ratGeneAssoc.setWith(tokens[7]);
-            ratGeneAssoc.setAspect(tokens[8]);
-            ratGeneAssoc.setDbObjectName(tokens[9]);
-            ratGeneAssoc.setSynonym(tokens[10]);
-            ratGeneAssoc.setDbObjectType(tokens[11]);
-            ratGeneAssoc.setTaxonId(tokens[12]);
-            ratGeneAssoc.setCreatedDate(tokens[13]);
-
-            // set data source, and perform any necessary substitutions (f.e. 'UniProt' -> 'UniProtKB')
-            if( ratGeneAssoc.setAssignedBy(tokens[14], getSourceSubst()) ) {
-                dataSourceSubstitutions++;
-            }
-
-            ratGeneAssoc.setAnnotationExtension(tokens[15]);
-            ratGeneAssoc.setGeneProductFormId(tokens[16]);
-
-            // do quality check for each row of data
-            ratGeneAssoc.ignoreMissingInRgdRef = false;
-            if( !qualityCheck(ratGeneAssoc) ) {
-                noPubMedEntries.add(ratGeneAssoc);
+        // do quality check for each row of data
+        Collections.shuffle(incomingRecords);
+        for( RatGeneAssoc rec: incomingRecords ) {
+            if (!qualityCheck(rec)) {
+                noPubMedEntries.add(rec);
             }
         }
-        br.close();
 
         importPubMedEntries(noPubMedEntries);
 
@@ -233,10 +204,66 @@ public class GoAnnotManager {
 
         dao.finalizeUpdates();
 
+        int invalidLines = counters.get("invalidLines");
         if( invalidLines>0 ) {
             log.warn("WARNING: file format problem: there are "+invalidLines+" lines having column count different than 17");
         }
 	}
+
+	List<RatGeneAssoc> loadIncomingRecords() throws Exception {
+
+        List<RatGeneAssoc> incomingRecords = new ArrayList<>();
+
+        try( BufferedReader br = new BufferedReader(new FileReader(getGoaFile())) ) {
+
+            String strLine;
+            while ((strLine = br.readLine()) != null) {
+
+                if (strLine.startsWith("!")) {
+                    continue;
+                }
+
+                String line = strLine.replace("MGI:MGI:", "MGI:");
+
+                counters.increment("linenum");
+                String[] tokens = line.split("[\\t]", -1);
+                if (tokens.length != 17) {
+                    counters.increment("invalidLines");
+                    continue;
+                }
+
+                RatGeneAssoc ratGeneAssoc = new RatGeneAssoc();
+                ratGeneAssoc.setDb(tokens[0]);
+                ratGeneAssoc.setDbObjectId(tokens[1]);
+                ratGeneAssoc.setDbObjectSymbol(tokens[2]);
+                ratGeneAssoc.setQualifier(qcQualifier(tokens[3]));
+                ratGeneAssoc.setGoId(tokens[4]);
+                ratGeneAssoc.setDbReferences(tokens[5]);
+                ratGeneAssoc.setEvidence(tokens[6]);
+                ratGeneAssoc.setWith(tokens[7]);
+                ratGeneAssoc.setAspect(tokens[8]);
+                ratGeneAssoc.setDbObjectName(tokens[9]);
+                ratGeneAssoc.setSynonym(tokens[10]);
+                ratGeneAssoc.setDbObjectType(tokens[11]);
+                ratGeneAssoc.setTaxonId(tokens[12]);
+                ratGeneAssoc.setCreatedDate(tokens[13]);
+
+                // set data source, and perform any necessary substitutions (f.e. 'UniProt' -> 'UniProtKB')
+                if (ratGeneAssoc.setAssignedBy(tokens[14], getSourceSubst())) {
+                    counters.increment("dataSourceSubstitutions");
+                }
+
+                ratGeneAssoc.setAnnotationExtension(tokens[15]);
+                ratGeneAssoc.setGeneProductFormId(tokens[16]);
+
+                // do quality check for each row of data
+                ratGeneAssoc.ignoreMissingInRgdRef = false;
+                incomingRecords.add(ratGeneAssoc);
+            }
+        }
+
+        return incomingRecords;
+    }
 
     String qcQualifier(String qualifier) throws Exception {
         if( qualifier!=null && !qualifier.isEmpty() ) {
@@ -336,13 +363,13 @@ public class GoAnnotManager {
 
 		// filter-out high-level GO terms
         if( !dao.isForCuration(rec.getGoId()) ) {
-            totTopLevelTermsSkipped++;
+            counters.increment("totTopLevelTermsSkipped");
             writeLogfile(logHighLevelGoTerm, rec);
             return true;
         }
 
         if( rec.getEvidence().equals("IPI") && dao.isCatalyticActivityTerm(rec.getGoId()) ) {
-            totCatalyticActivityIPITermsSkipped++;
+            counters.increment("totCatalyticActivityIPITermsSkipped");
             writeLogfile(logCatalyticActivityIPIGoTerm, rec);
             return true;
         }
@@ -368,13 +395,13 @@ public class GoAnnotManager {
 				// check rat_xrefs file
 				// will develop in phase II
 				// put in log file for now
-				totUnObjid++;
+				counters.increment("totUnObjid");
 				writeLogfile(logUnMatchedDbObjID, rec);
 				logRejected.info("Log File\t<NO_DB_OBJECT_ID found in RGD>\tDB_OBJECT_ID="+rec.getDbObjectId());
 			}
 		}
 		else {
-			totUnGoid++;
+			counters.increment("totUnGoid");
 			writeLogfile(logUnMatchedGOID, rec);
 			logRejected.info("Log File\n<NO_GO_ID found in RGD>\tGo_ID="+rec.getGoId());
 		}
@@ -420,7 +447,7 @@ public class GoAnnotManager {
             code = dataValidation.upsert(fullAnnot);
 
             if( code==2 ) { // inserted
-                totInserted++;
+                counters.increment("totInserted");
                 logLoaded.info("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
 
                 // fix created-date (inserting annotation will create a new created-date)
@@ -428,9 +455,9 @@ public class GoAnnotManager {
                 ratGeneAssoc.setCreatedDate(createdDate);
             }
             else if( code==3 ) { // updated
-                updatedAnnots++;
+                counters.increment("updatedAnnots");
             } else if( code==0 ){ // up-to-date
-                totDups++;
+                counters.increment("totDups");
 
                 // fix created-date (annotation in RGD could have a different created-date)
                 String createdDate = dateFormat.format(fullAnnot.getCreatedDate());
@@ -439,14 +466,14 @@ public class GoAnnotManager {
                 writeLogfile(logDuplAnnot, ratGeneAssoc);
                 dao.updateLastModified(fullAnnot.getKey());
             } else if( code==1 ){
-                skippedAnnots++;
+                counters.increment("skippedAnnots");
                 return true;
             } else {
                 throw new Exception("unexpected code="+code);
             }
 
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
-                totUnPubmed++;
+                counters.increment("totUnPubmed");
                 writeLogfile(logUnMatchedPubmed, ratGeneAssoc);
                 logRejected.info("Log File\t<No matching pubmed_id found in RGD>\t GO_ID="+ratGeneAssoc.getGoId()+"\tDB_REFERENCE="+ratGeneAssoc.getDbReferences());
             }
@@ -466,9 +493,9 @@ public class GoAnnotManager {
             if( getRefRgdIdsForGoPipelines().contains(ratGeneAssoc.getRefRgdId()) ) {
                 // this update is to prevent the GOC error that occurs when an IEA annotation is more than a year old
                 createdDate = threeMonthOldDate;
-                IEA_GO_annotsWithUpdatedCreatedDate++;
+                counters.increment("IEA_GO_annotsWithUpdatedCreatedDate");
             } else {
-                IEA_GO_annotsWithUntouchedCreatedDate++;
+                counters.increment("IEA_GO_annotsWithUntouchedCreatedDate");
             }
         }
 
