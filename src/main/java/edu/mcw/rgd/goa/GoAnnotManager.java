@@ -269,6 +269,7 @@ public class GoAnnotManager {
     	    noPubMedEntries = new ArrayList<>();
             counters = new CounterPool();
 
+            boolean doRestart = false;
             boolean isPubMedEntry;
             Collections.shuffle(incomingRecords);
             for( RatGeneAssoc rec: incomingRecords ) {
@@ -277,11 +278,15 @@ public class GoAnnotManager {
                 try {
                     isPubMedEntry = qualityCheck(rec);
                 } catch(org.springframework.dao.DuplicateKeyException e) {
+                    doRestart = true;
                     break;
                 }
                 if( !isPubMedEntry ) {
                     noPubMedEntries.add(rec);
                 }
+            }
+            if( doRestart ) {
+                continue;
             }
 
             if( restart!=0 ) {
