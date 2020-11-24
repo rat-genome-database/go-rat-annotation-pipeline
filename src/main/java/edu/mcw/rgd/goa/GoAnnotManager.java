@@ -86,7 +86,6 @@ public class GoAnnotManager {
         getLogger().info("----- "+getVersion()+" Starts ------");
 
         dataValidation.setDao(getDao());
-        counters = new CounterPool();
 
         int initialAnnotCount = dataValidation.loadPipelineAnnotations();
         log.info("Initial annotation count in RGD: "+initialAnnotCount);
@@ -113,6 +112,7 @@ public class GoAnnotManager {
         int IEA_GO_annotsWithUntouchedCreatedDate = counters.get("IEA_GO_annotsWithUntouchedCreatedDate");
         int dataSourceSubstitutions = counters.get("dataSourceSubstitutions");
         int rowDeleted = counters.get("rowDeleted");
+        int qcRestarts = counters.get("qcRestarts");
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -129,6 +129,8 @@ public class GoAnnotManager {
             log.info("Annotations skipped (catalytic activity IPI terms): "+totCatalyticActivityIPITermsSkipped);
         if( skippedAnnots>0 )
             log.info("Annotations skipped (matching annotations from other pipelines): "+skippedAnnots);
+        if( qcRestarts>0 )
+            log.info("WARNING: There were QC restarts: "+qcRestarts);
         log.info("Annotations with removed obsolete relations: "+dataValidation.getAnnotationsWithRemovedObsoleteRelations());
         log.info("  total count of removed obsolete relations: "+dataValidation.getCountOfRemovedObsoleteRelations());
 		log.info("-------------------------------------------------------");
@@ -181,19 +183,12 @@ public class GoAnnotManager {
 		// preload some data for better performance
         dao.init();
 
-        // lines with PubMed ids that do not have references in RGD
-        List<RatGeneAssoc> noPubMedEntries = new ArrayList<>();
-
         // parse file ("data/goa_rat")
         List<RatGeneAssoc> incomingRecords = loadIncomingRecords();
 
         // do quality check for each row of data
-        Collections.shuffle(incomingRecords);
-        for( RatGeneAssoc rec: incomingRecords ) {
-            if (!qualityCheck(rec)) {
-                noPubMedEntries.add(rec);
-            }
-        }
+        // noPubMedEntries: lines with PubMed ids that do not have references in RGD
+        List<RatGeneAssoc> noPubMedEntries = qcAll(incomingRecords);
 
         importPubMedEntries(noPubMedEntries);
 
@@ -225,7 +220,6 @@ public class GoAnnotManager {
 
                 String line = strLine.replace("MGI:MGI:", "MGI:");
 
-                counters.increment("linenum");
                 String[] tokens = line.split("[\\t]", -1);
                 if (tokens.length != 17) {
                     counters.increment("invalidLines");
@@ -263,6 +257,39 @@ public class GoAnnotManager {
         }
 
         return incomingRecords;
+    }
+
+    List<RatGeneAssoc> qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
+
+	    List<RatGeneAssoc> noPubMedEntries = null;
+
+	    int maxRestarts = 100;
+	    for( int restart=0; restart<maxRestarts; restart++ ) {
+
+    	    noPubMedEntries = new ArrayList<>();
+            counters = new CounterPool();
+
+            boolean isPubMedEntry;
+            Collections.shuffle(incomingRecords);
+            for( RatGeneAssoc rec: incomingRecords ) {
+                counters.increment("linenum");
+
+                try {
+                    isPubMedEntry = qualityCheck(rec);
+                } catch(org.springframework.dao.DuplicateKeyException e) {
+                    break;
+                }
+                if( !isPubMedEntry ) {
+                    noPubMedEntries.add(rec);
+                }
+            }
+
+            if( restart!=0 ) {
+                counters.add("qcRestarts", restart);
+            }
+            return noPubMedEntries;
+        }
+        return null;
     }
 
     String qcQualifier(String qualifier) throws Exception {

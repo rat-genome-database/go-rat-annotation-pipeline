@@ -1,3 +1,6 @@
+Nov 24, 2020
+- better exception handling
+
 Nov 23, 2020
 - incoming file parser replaces MGI:MGI:xxxxxxx with MGI:xxxxxxx
 - improved logging
