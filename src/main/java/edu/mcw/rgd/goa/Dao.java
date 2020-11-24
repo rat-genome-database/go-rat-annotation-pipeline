@@ -174,6 +174,7 @@ public class Dao {
 
         fa.setRefRgdId(fa.getRefRgdId()==null ? null : fa.getRefRgdId() > 0 ? fa.getRefRgdId() : null);
         fa.setLastModifiedBy(lastModifiedBy);
+        fa.setLastModifiedDate(new Date());
 
         annotDAO.updateAnnotation(fa);
     }
