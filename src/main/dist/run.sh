@@ -11,7 +11,7 @@ APPDIR=/home/rgddata/pipelines/$APPNAME
 
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 if [ "$SERVER" == "REED" ]; then
-  EMAILLIST=rgd.developers@mcw.edu,jrsmith@mcw.edu,slaulederkind@mcw.edu
+  EMAILLIST=rgd.devops@mcw.edu,jrsmith@mcw.edu,slaulederkind@mcw.edu
 else
   EMAILLIST=mtutaj@mcw.edu
 fi
@@ -22,5 +22,5 @@ java -Dspring.config=$APPDIR/../properties/default_db2.xml \
   -Dlog4j.configuration=file://$APPDIR/properties/log4j.properties \
   -jar lib/${APPNAME}.jar "$@" > $APPDIR/run.log
 
-mailx -s "[$SERVER] GOA rat annotation pipeline" $EMAILLIST < $APPDIR/logs/GoaSum.log
+mailx -s "[$SERVER] GOA rat annotation pipeline" $EMAILLIST < $APPDIR/logs/GoaSummary.log
 
