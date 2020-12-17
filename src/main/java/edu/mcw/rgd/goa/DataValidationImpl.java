@@ -131,8 +131,8 @@ public class DataValidationImpl {
         }
 
         logUpdatedAnnots.debug("RGD:"+annot.getAnnotatedObjectRgdId()+"; "+annot.getTermAcc()+"; "+annot.getRefRgdId()
-            +"\nANNOTATION_EXTENSION OLD["+annotInRgd.getAnnotationExtension()+"] NEW ["+annot.getAnnotationExtension()+"]"
-            +"\nGENE_PRODUCT_FORM_ID OLD["+annotInRgd.getGeneProductFormId()+"] NEW ["+annot.getGeneProductFormId()+"]");
+            +"\nANNOTATION_EXTENSION OLD["+Utils.NVL(annotInRgd.getAnnotationExtension(),"")+"] NEW ["+Utils.NVL(annot.getAnnotationExtension(),"")+"]"
+            +"\nGENE_PRODUCT_FORM_ID OLD["+Utils.NVL(annotInRgd.getGeneProductFormId(),"")+"] NEW ["+Utils.NVL(annot.getGeneProductFormId(),"")+"]");
         dao.updateFullAnnot(annot);
         return 3;
     }
