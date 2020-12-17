@@ -453,9 +453,9 @@ public class GoAnnotManager {
 			dbRef=dbRef.replace("PMID:","");
 			fullAnnot.setRefRgdId(dao.getRefIdByPubMed(dbRef));
 
-            if( fullAnnot.getRefRgdId()==0 ) {
-				fullAnnot.setXrefSource(ratGeneAssoc.getDbReferences());
-				if( !ratGeneAssoc.ignoreMissingInRgdRef )
+            if (fullAnnot.getRefRgdId()==null || fullAnnot.getRefRgdId() == 0) {
+                fullAnnot.setXrefSource(ratGeneAssoc.getDbReferences());
+                if (!ratGeneAssoc.ignoreMissingInRgdRef)
                     return false;
             }
 		}
