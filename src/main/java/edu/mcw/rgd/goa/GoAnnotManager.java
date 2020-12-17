@@ -468,8 +468,7 @@ public class GoAnnotManager {
 			fullAnnot.setRefRgdId(specialRefRgdId);
 			fullAnnot.setXrefSource(ratGeneAssoc.getDbReferences());
         }
-        ratGeneAssoc.setRefRgdId(fullAnnot.getRefRgdId());
-
+        ratGeneAssoc.setRefRgdId(Utils.NVL(fullAnnot.getRefRgdId(),0));
 
         for( Gene geneInfo: geneInfos ){
             setFullAnnotBean(fullAnnot, geneInfo);
