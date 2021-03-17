@@ -1,3 +1,6 @@
+Mar 17, 2021
+  updated source URL for gorel.obo file (used as source of obsolete GO relations)
+
 Dec 17, 2020
 - fixed NullPointerException
 

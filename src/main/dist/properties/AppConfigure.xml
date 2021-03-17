@@ -2,12 +2,12 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="GOA rat annotation pipeline   -- build Dec 17, 2020" />
+        <property name="version" value="GOA rat annotation pipeline  -- version 2021-03-17" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
 	    <property name="specialRefRgdId" value="1600115"/>
 
-        <property name="goRelFile" value="http://viewvc.geneontology.org/viewvc/GO-SVN/trunk/ontology/extensions/gorel.obo"/>
+        <property name="goRelFile" value="http://current.geneontology.org/ontology/extensions/gorel.obo"/>
 
         <property name="goaRatFiles">
             <list>
