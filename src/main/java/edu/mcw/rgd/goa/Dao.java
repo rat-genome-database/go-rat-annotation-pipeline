@@ -18,7 +18,6 @@ import java.util.*;
  */
 public class Dao {
 
-    private final Logger log = Logger.getLogger("GoaSummary");
     private final Logger logger = Logger.getLogger(getClass());
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
@@ -179,13 +178,9 @@ public class Dao {
         annotDAO.updateAnnotation(fa);
     }
 
-    public void init() throws Exception {
+    public void init() {
         // update LAST_MODIFIED_DATE in batches of up to 1000 rows
         _updateLastModified = new ArrayList<>(1000);
-
-        // preload map of PMID ids to RefRgdId
-        int cnt = loadPmidAndRefRgdIdMap();
-        log.info("PMID and RefRgdId map preloaded: "+cnt);
     }
 
     public void finalizeUpdates() throws Exception {
@@ -206,21 +201,6 @@ public class Dao {
         fullAnnotKeys.clear();
     }
     private List<Integer> _updateLastModified = null;
-
-
-    public int loadPmidAndRefRgdIdMap() throws Exception {
-        _pmidRefRgdIdMap = new HashMap<>();
-
-        for( IntStringMapQuery.MapPair p: referenceDAO.getPubmedIdsAndRefRgdIds() ) {
-            _pmidRefRgdIdMap.put(p.stringValue, p.keyValue);
-        }
-        return _pmidRefRgdIdMap.size();
-    }
-
-    public Integer getRefIdByPubMed(String pubmedId) {
-        return _pmidRefRgdIdMap.get(pubmedId);
-    }
-    Map<String,Integer> _pmidRefRgdIdMap;
 
 
     /**
@@ -267,6 +247,9 @@ public class Dao {
     }
     private Set<String> _ontologyQualifiers = null;
 
+    public List<IntStringMapQuery.MapPair> getPubmedIdsAndRefRgdIds() throws  Exception {
+        return referenceDAO.getPubmedIdsAndRefRgdIds();
+    }
 
     public int getCreatedBy() {
         return createdBy;

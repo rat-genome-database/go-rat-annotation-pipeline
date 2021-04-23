@@ -27,8 +27,6 @@ public class RatGeneAssoc {
     String annotationExtension;
     String geneProductFormId; // i.e. UniProtKB:P12345-2
 
-    public boolean ignoreMissingInRgdRef;
-
 	public String getAspect() {
 		return aspect;
 	}

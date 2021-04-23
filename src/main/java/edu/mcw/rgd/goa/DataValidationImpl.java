@@ -74,33 +74,6 @@ public class DataValidationImpl {
     /**
      *
      * @param annot
-     * @return true if new annotation has been inserted
-     * @throws Exception
-     */
-    synchronized public boolean insertIfNew(Annotation annot) throws Exception {
-
-        Annotation annotInRgd = annotCache.getAnnotInRgd(annot);
-        if( annotInRgd==null ) {
-            if( dao.insertFullAnnot(annot) ) {
-                annotCache.insert(annot);
-                return true;
-            } else {
-                logSkippedAnnots.info(annot.dump("|"));
-                return false;
-            }
-        }
-
-        annot.setKey(annotInRgd.getKey());
-        annot.setCreatedDate(annotInRgd.getCreatedDate());
-        annot.setCreatedBy(annotInRgd.getCreatedBy());
-        annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
-        annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
-        return false;
-    }
-
-    /**
-     *
-     * @param annot
      * @return 0 - up-to-date; 1 - skipped; 2 - inserted; 3 - updated
      * @throws Exception
      */

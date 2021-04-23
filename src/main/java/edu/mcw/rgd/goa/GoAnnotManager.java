@@ -1,6 +1,5 @@
 package edu.mcw.rgd.goa;
 
-import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -52,20 +51,18 @@ public class GoAnnotManager {
 	protected final Logger logRejected = Logger.getLogger("rejected");
     protected final Logger logHighLevelGoTerm = Logger.getLogger("highLevelGoTerm");
     protected final Logger logCatalyticActivityIPIGoTerm = Logger.getLogger("catalyticActivityIPIGoTerm");
-    protected final Logger logImportedReferences = Logger.getLogger("importedReferences");
 
     private String localFile;
     private String nonRgdFile;
     private String goaFile;
     private String goaRgdTxt;
     private String version;
-    private String importPubMedUrl;
     private List<String> goaRatFiles;
     private String goRelFile;
     private Set<Integer> refRgdIdsForGoPipelines;
     private Map<String,String> sourceSubst;
     private String threeMonthOldDate;
-    private Map<String,String> importPubmedToolHost;
+    private PubMedManager pubMedManager;
 
     public static void main(String[] args) throws Exception {
 
@@ -178,24 +175,17 @@ public class GoAnnotManager {
 
         processGoRelObo();
 
-		log.debug("start parsing the input file");
-
-		// preload some data for better performance
         dao.init();
+
+		log.debug("start parsing the input file");
 
         // parse file ("data/goa_rat")
         List<RatGeneAssoc> incomingRecords = loadIncomingRecords();
 
+        getPubMedManager().importMissingPubmedEntries(dao, incomingRecords);
+
         // do quality check for each row of data
-        // noPubMedEntries: lines with PubMed ids that do not have references in RGD
-        List<RatGeneAssoc> noPubMedEntries = qcAll(incomingRecords);
-
-        importPubMedEntries(noPubMedEntries);
-
-        for( RatGeneAssoc assoc: noPubMedEntries ) {
-            assoc.ignoreMissingInRgdRef = true;
-            qualityCheck(assoc);
-        }
+        qcAll(incomingRecords);
 
         dao.finalizeUpdates();
 
@@ -251,7 +241,6 @@ public class GoAnnotManager {
                 ratGeneAssoc.setGeneProductFormId(tokens[16]);
 
                 // do quality check for each row of data
-                ratGeneAssoc.ignoreMissingInRgdRef = false;
                 incomingRecords.add(ratGeneAssoc);
             }
         }
@@ -259,30 +248,23 @@ public class GoAnnotManager {
         return incomingRecords;
     }
 
-    List<RatGeneAssoc> qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
-
-	    List<RatGeneAssoc> noPubMedEntries = null;
+    void qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
 
 	    int maxRestarts = 100;
 	    for( int restart=0; restart<maxRestarts; restart++ ) {
 
-    	    noPubMedEntries = new ArrayList<>();
             counters = new CounterPool();
 
             boolean doRestart = false;
-            boolean isPubMedEntry;
             Collections.shuffle(incomingRecords);
             for( RatGeneAssoc rec: incomingRecords ) {
                 counters.increment("linenum");
 
                 try {
-                    isPubMedEntry = qualityCheck(rec);
+                    qualityCheck(rec);
                 } catch(org.springframework.dao.DuplicateKeyException e) {
                     doRestart = true;
                     break;
-                }
-                if( !isPubMedEntry ) {
-                    noPubMedEntries.add(rec);
                 }
             }
             if( doRestart ) {
@@ -292,9 +274,7 @@ public class GoAnnotManager {
             if( restart!=0 ) {
                 counters.add("qcRestarts", restart);
             }
-            return noPubMedEntries;
         }
-        return null;
     }
 
     String qcQualifier(String qualifier) throws Exception {
@@ -310,86 +290,6 @@ public class GoAnnotManager {
         return qualifier;
     }
 
-    void importPubMedEntries(List<RatGeneAssoc> noPubMedEntries) throws Exception {
-
-        log.info(" lines with PubMed id not in RGD: "+noPubMedEntries.size());
-        if( noPubMedEntries.isEmpty() )
-            return;
-
-        Set<Integer> pubMedIds = new HashSet<>(noPubMedEntries.size());
-        for( RatGeneAssoc assoc: noPubMedEntries ) {
-            String dbRef = assoc.getDbReferences();
-            if( !dbRef.startsWith("PMID:") )
-                continue;
-            int pubMedId = Integer.parseInt(dbRef.substring(5));
-            pubMedIds.add(pubMedId);
-        }
-        log.info(" PubMed ids not in RGD: " + pubMedIds.size());
-        log.info(" Import URL: "+getImportPubMedUrl());
-
-        InetAddress inetAddress = InetAddress. getLocalHost();
-        String hostName = inetAddress. getHostName().toLowerCase();
-        String pubmedToolHostUrl = getImportPubmedToolHost().get(hostName);
-        if( pubmedToolHostUrl==null ) {
-            throw new Exception("Update properties file and provide mapping for host "+hostName);
-        }
-
-        int importedPubMedIds = 0;
-        for( Integer pubMedId: pubMedIds ) {
-            String extFile = pubmedToolHostUrl+getImportPubMedUrl()+pubMedId;
-
-            FileDownloader downloader = new FileDownloader();
-            downloader.setExternalFile(extFile);
-            downloader.setLocalFile("data/pmid_"+pubMedId+".html");
-            downloader.setPrependDateStamp(true);
-            String localFile = downloader.download();
-
-            if( parseRefImportReport(localFile, pubMedId) ) {
-                importedPubMedIds++;
-            }
-        }
-
-        log.info(" References for PubMed ids imported: "+importedPubMedIds);
-    }
-
-    /**
-     *
-     * @param localFile local file name
-     * @param pubMedId PubMed id
-     * @return true if the reference with given PubMedId has been imported into RGD successfully
-     * @throws IOException
-     */
-    boolean parseRefImportReport(String localFile, int pubMedId) throws IOException {
-
-        // load entire report file into a string
-        String localFileContent = "";
-        String buf;
-        BufferedReader reader = new BufferedReader(new FileReader(localFile));
-        while( (buf=reader.readLine())!=null ) {
-            localFileContent += buf +"\n";
-        }
-        reader.close();
-
-        // if successful, the report will contain the RGD_ID of the imported reference
-        // f.e. "/rgdCuration/?module=curation&func=addReferenceToBucket&RGD_ID=7395592"
-        int pos1 = localFileContent.indexOf("RGD_ID=");
-        int pos2 = localFileContent.indexOf("\"", pos1);
-        if( pos1>0 && pos1<pos2 ) {
-            logImportedReferences.info("   PMID:"+pubMedId+" ==> REF_"+localFileContent.substring(pos1, pos2));
-            return true;
-        }
-
-        // if there is an error
-        pos1 = localFileContent.indexOf("<title>");
-        pos2 = localFileContent.indexOf("</title>");
-        if( pos1>0 && pos1<pos2 ) {
-            log.info("   PMID:"+pubMedId+" - "+localFileContent.substring(pos1+7, pos2));
-        }
-        else {
-            log.info("   PMID:"+pubMedId+" - "+localFileContent);
-        }
-        return false;
-    }
 
 	public boolean qualityCheck(RatGeneAssoc rec) throws Exception {
 
@@ -451,12 +351,10 @@ public class GoAnnotManager {
 		String dbRef = ratGeneAssoc.getDbReferences();
 		if(dbRef.startsWith("PMID:")){
 			dbRef=dbRef.replace("PMID:","");
-			fullAnnot.setRefRgdId(dao.getRefIdByPubMed(dbRef));
+			fullAnnot.setRefRgdId(getPubMedManager().getRefIdByPubMed(dbRef));
 
             if (fullAnnot.getRefRgdId()==null || fullAnnot.getRefRgdId() == 0) {
                 fullAnnot.setXrefSource(ratGeneAssoc.getDbReferences());
-                if (!ratGeneAssoc.ignoreMissingInRgdRef)
-                    return false;
             }
 		}
 		else {
@@ -806,14 +704,6 @@ public class GoAnnotManager {
         return version;
     }
 
-    public void setImportPubMedUrl(String importPubMedUrl) {
-        this.importPubMedUrl = importPubMedUrl;
-    }
-
-    public String getImportPubMedUrl() {
-        return importPubMedUrl;
-    }
-
     public void setGoaRatFiles(List<String> goaRatFiles) {
         this.goaRatFiles = goaRatFiles;
     }
@@ -846,11 +736,11 @@ public class GoAnnotManager {
         return sourceSubst;
     }
 
-    public void setImportPubmedToolHost(Map<String,String> importPubmedToolHost) {
-        this.importPubmedToolHost = importPubmedToolHost;
+    public PubMedManager getPubMedManager() {
+        return pubMedManager;
     }
 
-    public Map<String,String> getImportPubmedToolHost() {
-        return importPubmedToolHost;
+    public void setPubMedManager(PubMedManager pubMedManager) {
+        this.pubMedManager = pubMedManager;
     }
 }
