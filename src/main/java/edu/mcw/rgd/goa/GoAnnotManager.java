@@ -1,6 +1,7 @@
 package edu.mcw.rgd.goa;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
@@ -110,6 +111,7 @@ public class GoAnnotManager {
         int dataSourceSubstitutions = counters.get("dataSourceSubstitutions");
         int rowDeleted = counters.get("rowDeleted");
         int qcRestarts = counters.get("qcRestarts");
+        int createdDateUpdated = counters.get("createdDateUpdated");
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -117,7 +119,10 @@ public class GoAnnotManager {
         log.info("Annotations matching RGD: "+totDups);
 		log.info("Annotations loaded into RGD: "+totInserted);
         if( updatedAnnots!=0 ) {
-            log.info("Annotations updated into RGD: "+updatedAnnots);
+            log.info("Annotations updated in RGD: "+updatedAnnots);
+        }
+        if( createdDateUpdated!=0 ) {
+            log.info("  -- including annotations with CREATED_DATE updated: "+createdDateUpdated);
         }
         log.info("Annotations in RGD final count: "+getDao().getCountOfAnnotations());
         if( totTopLevelTermsSkipped>0 )
@@ -250,18 +255,28 @@ public class GoAnnotManager {
 
     void qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
 
-	    int maxRestarts = 100;
-	    for( int restart=0; restart<maxRestarts; restart++ ) {
+	    List<RatGeneAssoc> recordsToProcess = new ArrayList<>(incomingRecords);
+
+	    final int maxRestarts = 1000;
+	    int restart=0;
+	    for( ; restart<maxRestarts; restart++ ) {
+
+	        log.info("    starting qc for "+recordsToProcess.size()+" records, iteration "+restart);
 
             counters = new CounterPool();
 
             boolean doRestart = false;
-            Collections.shuffle(incomingRecords);
-            for( RatGeneAssoc rec: incomingRecords ) {
-                counters.increment("linenum");
+            //Collections.shuffle(recordsToProcess);
+
+            Iterator<RatGeneAssoc> it = recordsToProcess.iterator();
+
+            while( it.hasNext() ) {
+                RatGeneAssoc rec = it.next();
 
                 try {
                     qualityCheck(rec);
+                    counters.increment("linenum");
+                    it.remove();
                 } catch(org.springframework.dao.DuplicateKeyException e) {
                     doRestart = true;
                     break;
@@ -271,10 +286,13 @@ public class GoAnnotManager {
                 continue;
             }
 
-            if( restart!=0 ) {
-                counters.add("qcRestarts", restart);
-            }
+            // all records processed without problems -- break the restart loop
+            break;
         }
+        if( restart!=0 ) {
+            counters.add("qcRestarts", restart);
+        }
+        log.info("    finished qc, iteration "+restart);
     }
 
     String qcQualifier(String qualifier) throws Exception {
@@ -373,7 +391,7 @@ public class GoAnnotManager {
             fullAnnot.setAnnotatedObjectRgdId(geneInfo.getRgdId());
 
             int code; // 0 - up-to-date; 1 - skipped; 2 - inserted; 3 - updated
-            code = dataValidation.upsert(fullAnnot);
+            code = dataValidation.upsert(fullAnnot, counters);
 
             if( code==2 ) { // inserted
                 counters.increment("totInserted");
@@ -464,7 +482,7 @@ public class GoAnnotManager {
         fullAnnot.setRgdObjectKey(RgdId.OBJECT_KEY_GENES);
     }
 
-	public void setFullAnnotBean(Annotation fullAnnot, RatGeneAssoc ratGeneAssoc) {
+	public void setFullAnnotBean(Annotation fullAnnot, RatGeneAssoc ratGeneAssoc) throws ParseException {
 
 		fullAnnot.setTermAcc(ratGeneAssoc.getGoId());
 		fullAnnot.setWithInfo(ratGeneAssoc.getWith());
@@ -475,7 +493,9 @@ public class GoAnnotManager {
         fullAnnot.setQualifier(ratGeneAssoc.getQualifier());
         fullAnnot.setAnnotationExtension(ratGeneAssoc.getAnnotationExtension());
         fullAnnot.setGeneProductFormId(ratGeneAssoc.getGeneProductFormId());
-	}
+
+        fullAnnot.setCreatedDate(dateFormat.parse(ratGeneAssoc.getCreatedDate()));
+    }
 
     void downloadGoRelFile() throws Exception {
         FileDownloader downloader = new FileDownloader();

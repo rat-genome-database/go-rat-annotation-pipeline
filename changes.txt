@@ -1,3 +1,6 @@
+May 05, 2021
+  fixed handling of creation date for incoming annotations
+
 Apr 23, 2021
   refactored code: all PubMed qc/import code moved to separate class PubMedManager
 

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
+import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
 
 import org.apache.log4j.Logger;
@@ -77,7 +78,7 @@ public class DataValidationImpl {
      * @return 0 - up-to-date; 1 - skipped; 2 - inserted; 3 - updated
      * @throws Exception
      */
-    synchronized public int upsert(Annotation annot) throws Exception {
+    synchronized public int upsert(Annotation annot, CounterPool counters) throws Exception {
 
         Annotation annotInRgd = annotCache.getAnnotInRgd(annot);
         if( annotInRgd==null ) {
@@ -91,8 +92,9 @@ public class DataValidationImpl {
         }
 
         annot.setKey(annotInRgd.getKey());
-        annot.setCreatedDate(annotInRgd.getCreatedDate());
         annot.setCreatedBy(annotInRgd.getCreatedBy());
+
+        boolean wasUpdated = false;
 
         if( Utils.stringsAreEqualIgnoreCase(annot.getAnnotationExtension(), annotInRgd.getAnnotationExtension()) &&
             Utils.stringsAreEqualIgnoreCase(annot.getGeneProductFormId(), annotInRgd.getGeneProductFormId()) ) {
@@ -100,14 +102,29 @@ public class DataValidationImpl {
             // up-to-date
             annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
             annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
-            return 0;
+        } else {
+
+            logUpdatedAnnots.debug("RGD:" + annot.getAnnotatedObjectRgdId() + "; " + annot.getTermAcc() + "; " + annot.getRefRgdId()
+                    + "\nANNOTATION_EXTENSION OLD[" + Utils.NVL(annotInRgd.getAnnotationExtension(), "") + "] NEW [" + Utils.NVL(annot.getAnnotationExtension(), "") + "]"
+                    + "\nGENE_PRODUCT_FORM_ID OLD[" + Utils.NVL(annotInRgd.getGeneProductFormId(), "") + "] NEW [" + Utils.NVL(annot.getGeneProductFormId(), "") + "]");
+            dao.updateFullAnnot(annot);
+            wasUpdated = true;
         }
 
-        logUpdatedAnnots.debug("RGD:"+annot.getAnnotatedObjectRgdId()+"; "+annot.getTermAcc()+"; "+annot.getRefRgdId()
-            +"\nANNOTATION_EXTENSION OLD["+Utils.NVL(annotInRgd.getAnnotationExtension(),"")+"] NEW ["+Utils.NVL(annot.getAnnotationExtension(),"")+"]"
-            +"\nGENE_PRODUCT_FORM_ID OLD["+Utils.NVL(annotInRgd.getGeneProductFormId(),"")+"] NEW ["+Utils.NVL(annot.getGeneProductFormId(),"")+"]");
-        dao.updateFullAnnot(annot);
-        return 3;
+        // update created-date, if needed
+        if( !Utils.datesAreEqual(annot.getCreatedDate(), annotInRgd.getCreatedDate()) ) {
+
+            logUpdatedAnnots.debug("RGD:" + annot.getAnnotatedObjectRgdId() + "; " + annot.getTermAcc() + "; " + annot.getRefRgdId()
+                    + "\nCREATED_DATE OLD[" + annotInRgd.getCreatedDate() + "] NEW [" + annot.getCreatedDate() + "]");
+
+            dao.updateCreatedDate(annot);
+
+            wasUpdated = true;
+
+            counters.increment("createdDateUpdated");
+        }
+
+        return wasUpdated ? 3 : 0;
     }
 
     public void validateExtensionRelations(RatGeneAssoc rga) {
