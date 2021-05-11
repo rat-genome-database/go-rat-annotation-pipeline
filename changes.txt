@@ -1,3 +1,6 @@
+May 11, 2021
+  added handling of new field 'ORIGINAL_CREATED_DATE'
+
 May 05, 2021
   fixed handling of creation date for incoming annotations
 

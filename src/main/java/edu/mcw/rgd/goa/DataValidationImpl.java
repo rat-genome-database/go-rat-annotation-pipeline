@@ -97,31 +97,29 @@ public class DataValidationImpl {
         boolean wasUpdated = false;
 
         if( Utils.stringsAreEqualIgnoreCase(annot.getAnnotationExtension(), annotInRgd.getAnnotationExtension()) &&
-            Utils.stringsAreEqualIgnoreCase(annot.getGeneProductFormId(), annotInRgd.getGeneProductFormId()) ) {
+            Utils.stringsAreEqualIgnoreCase(annot.getGeneProductFormId(), annotInRgd.getGeneProductFormId()) &&
+            Utils.datesAreEqual(annot.getOriginalCreatedDate(), annotInRgd.getOriginalCreatedDate())
+        ) {
 
             // up-to-date
             annot.setLastModifiedDate(annotInRgd.getLastModifiedDate());
             annot.setLastModifiedBy(annotInRgd.getLastModifiedBy());
         } else {
+            if( !Utils.datesAreEqual(annot.getOriginalCreatedDate(), annotInRgd.getOriginalCreatedDate()) ) {
+                counters.increment("createdDateUpdated");
+            }
 
             logUpdatedAnnots.debug("RGD:" + annot.getAnnotatedObjectRgdId() + "; " + annot.getTermAcc() + "; " + annot.getRefRgdId()
-                    + "\nANNOTATION_EXTENSION OLD[" + Utils.NVL(annotInRgd.getAnnotationExtension(), "") + "] NEW [" + Utils.NVL(annot.getAnnotationExtension(), "") + "]"
-                    + "\nGENE_PRODUCT_FORM_ID OLD[" + Utils.NVL(annotInRgd.getGeneProductFormId(), "") + "] NEW [" + Utils.NVL(annot.getGeneProductFormId(), "") + "]");
+                + "\nANNOTATION_EXTENSION OLD[" + Utils.NVL(annotInRgd.getAnnotationExtension(), "") + "] NEW [" + Utils.NVL(annot.getAnnotationExtension(), "") + "]"
+                + "\nGENE_PRODUCT_FORM_ID OLD[" + Utils.NVL(annotInRgd.getGeneProductFormId(), "") + "] NEW [" + Utils.NVL(annot.getGeneProductFormId(), "") + "]"
+                + "\nORIG_CREATED_DATE OLD[" + annotInRgd.getOriginalCreatedDate() + "] NEW [" + annot.getOriginalCreatedDate() + "]");
             dao.updateFullAnnot(annot);
-            wasUpdated = true;
-        }
 
-        // update created-date, if needed
-        if( !Utils.datesAreEqual(annot.getCreatedDate(), annotInRgd.getCreatedDate()) ) {
-
-            logUpdatedAnnots.debug("RGD:" + annot.getAnnotatedObjectRgdId() + "; " + annot.getTermAcc() + "; " + annot.getRefRgdId()
-                    + "\nCREATED_DATE OLD[" + annotInRgd.getCreatedDate() + "] NEW [" + annot.getCreatedDate() + "]");
-
-            dao.updateCreatedDate(annot);
+            annotInRgd.setAnnotationExtension(annot.getAnnotationExtension());
+            annotInRgd.setGeneProductFormId(annot.getGeneProductFormId());
+            annotInRgd.setOriginalCreatedDate(annot.getOriginalCreatedDate());
 
             wasUpdated = true;
-
-            counters.increment("createdDateUpdated");
         }
 
         return wasUpdated ? 3 : 0;

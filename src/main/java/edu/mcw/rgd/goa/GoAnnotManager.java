@@ -122,7 +122,7 @@ public class GoAnnotManager {
             log.info("Annotations updated in RGD: "+updatedAnnots);
         }
         if( createdDateUpdated!=0 ) {
-            log.info("  -- including annotations with CREATED_DATE updated: "+createdDateUpdated);
+            log.info("  -- including annotations with ORIGINAL_CREATED_DATE updated: "+createdDateUpdated);
         }
         log.info("Annotations in RGD final count: "+getDao().getCountOfAnnotations());
         if( totTopLevelTermsSkipped>0 )
@@ -396,19 +396,11 @@ public class GoAnnotManager {
             if( code==2 ) { // inserted
                 counters.increment("totInserted");
                 logLoaded.info("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
-
-                // fix created-date (inserting annotation will create a new created-date)
-                String createdDate = dateFormat.format(fullAnnot.getCreatedDate());
-                ratGeneAssoc.setCreatedDate(createdDate);
             }
             else if( code==3 ) { // updated
                 counters.increment("updatedAnnots");
             } else if( code==0 ){ // up-to-date
                 counters.increment("totDups");
-
-                // fix created-date (annotation in RGD could have a different created-date)
-                String createdDate = dateFormat.format(fullAnnot.getCreatedDate());
-                ratGeneAssoc.setCreatedDate(createdDate);
 
                 writeLogfile(logDuplAnnot, ratGeneAssoc);
                 dao.updateLastModified(fullAnnot.getKey());
@@ -431,7 +423,7 @@ public class GoAnnotManager {
 
 	public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc) {
 
-        // always export data in gaf 2.0 format (timestamp followed by 17 columns of gaf 2.0 format)
+        // export data in gaf 2.2 format
         //
         // fixup: when exporting IEA annotations for GO and olfactory genes pipelines, set the created-date
         //        to be 3 months old
@@ -494,7 +486,7 @@ public class GoAnnotManager {
         fullAnnot.setAnnotationExtension(ratGeneAssoc.getAnnotationExtension());
         fullAnnot.setGeneProductFormId(ratGeneAssoc.getGeneProductFormId());
 
-        fullAnnot.setCreatedDate(dateFormat.parse(ratGeneAssoc.getCreatedDate()));
+        fullAnnot.setOriginalCreatedDate(dateFormat.parse(ratGeneAssoc.getCreatedDate()));
     }
 
     void downloadGoRelFile() throws Exception {

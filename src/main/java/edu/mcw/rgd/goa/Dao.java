@@ -178,12 +178,6 @@ public class Dao {
         annotDAO.updateAnnotation(fa);
     }
 
-    public void updateCreatedDate(Annotation fa) throws Exception {
-
-        String sql = "UPDATE full_annot SET created_date=? WHERE full_annot_key=?";
-        annotDAO.update(sql, fa.getCreatedDate(), fa.getKey());
-    }
-
     public void init() {
         // update LAST_MODIFIED_DATE in batches of up to 1000 rows
         _updateLastModified = new ArrayList<>(1000);
