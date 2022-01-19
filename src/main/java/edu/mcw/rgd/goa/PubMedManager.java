@@ -138,7 +138,7 @@ public class PubMedManager {
         int pos1 = localFileContent.indexOf("RGD_ID=");
         int pos2 = localFileContent.indexOf("\"", pos1);
         if( pos1>0 && pos1<pos2 ) {
-            logImportedReferences.info("   PMID:"+pubMedId+" ==> REF_"+localFileContent.substring(pos1, pos2));
+            logImportedReferences.debug("   PMID:"+pubMedId+" ==> REF_"+localFileContent.substring(pos1, pos2));
             return true;
         }
 
@@ -146,10 +146,10 @@ public class PubMedManager {
         pos1 = localFileContent.indexOf("<title>");
         pos2 = localFileContent.indexOf("</title>");
         if( pos1>0 && pos1<pos2 ) {
-            log.info("   PMID:"+pubMedId+" - "+localFileContent.substring(pos1+7, pos2));
+            log.debug("   PMID:"+pubMedId+" - "+localFileContent.substring(pos1+7, pos2));
         }
         else {
-            log.info("   PMID:"+pubMedId+" - "+localFileContent);
+            log.debug("   PMID:"+pubMedId+" - "+localFileContent);
         }
         return false;
     }

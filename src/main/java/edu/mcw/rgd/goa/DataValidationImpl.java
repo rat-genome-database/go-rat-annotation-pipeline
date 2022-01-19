@@ -87,7 +87,7 @@ public class DataValidationImpl {
                 annotCache.insert(annot);
                 return 2;
             } else {
-                logSkippedAnnots.info(annot.dump("|"));
+                logSkippedAnnots.debug(annot.dump("|"));
                 return 1;
             }
         }
@@ -177,7 +177,7 @@ public class DataValidationImpl {
                 newAnnotExt = newAnnotExt.replace("|,", "|");
             }
 
-            logObsoleteRelInAnnotExt.info("obsolete relations removed from annotation extension: '"
+            logObsoleteRelInAnnotExt.debug("obsolete relations removed from annotation extension: '"
                     +rga.getAnnotationExtension()+"'==>'"+newAnnotExt
                     +"' "+rga.getDb()+" "+rga.getDbObjectId()+" "+rga.getDbObjectSymbol()+" "+rga.getGoId()
                     +" "+rga.getDbReferences()+" "+rga.getEvidence());

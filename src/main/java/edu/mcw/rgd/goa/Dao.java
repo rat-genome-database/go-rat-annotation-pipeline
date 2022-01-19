@@ -131,7 +131,7 @@ public class Dao {
         List<Annotation> annotsForDelete = annotDAO.getAnnotationsModifiedBeforeTimestamp(createdBy, cutoffDate);
         Logger logDelete = LogManager.getLogger("deleted");
         for( Annotation a: annotsForDelete ) {
-            logDelete.info(a.dump("|"));
+            logDelete.debug(a.dump("|"));
         }
         int annotsForDeleteCount = annotsForDelete.size();
         int annotsForDeleteThreshold = (deleteThreshold * currentAnnotCount) / 100; // 5% delete threshold

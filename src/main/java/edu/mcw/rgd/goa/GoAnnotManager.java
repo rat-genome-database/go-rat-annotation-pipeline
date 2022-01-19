@@ -267,7 +267,7 @@ public class GoAnnotManager {
             counters = new CounterPool();
 
             boolean doRestart = false;
-            //Collections.shuffle(recordsToProcess);
+            Collections.shuffle(recordsToProcess);
 
             Iterator<RatGeneAssoc> it = recordsToProcess.iterator();
 
@@ -348,13 +348,13 @@ public class GoAnnotManager {
 				// put in log file for now
 				counters.increment("totUnObjid");
 				writeLogfile(logUnMatchedDbObjID, rec);
-				logRejected.info("Log File\t<NO_DB_OBJECT_ID found in RGD>\tDB_OBJECT_ID="+rec.getDbObjectId());
+				logRejected.debug("Log File\t<NO_DB_OBJECT_ID found in RGD>\tDB_OBJECT_ID="+rec.getDbObjectId());
 			}
 		}
 		else {
 			counters.increment("totUnGoid");
 			writeLogfile(logUnMatchedGOID, rec);
-			logRejected.info("Log File\n<NO_GO_ID found in RGD>\tGo_ID="+rec.getGoId());
+			logRejected.debug("Log File\n<NO_GO_ID found in RGD>\tGo_ID="+rec.getGoId());
 		}
         return true;
 	}
@@ -396,7 +396,7 @@ public class GoAnnotManager {
 
             if( code==2 ) { // inserted
                 counters.increment("totInserted");
-                logLoaded.info("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
+                logLoaded.debug("insert successful\tRGD_ID="+geneInfo.getRgdId()+"\tGO_ID="+ratGeneAssoc.getGoId()+"\tPubmed="+dbRef+"\tref_rgd_id="+fullAnnot.getRefRgdId());
             }
             else if( code==3 ) { // updated
                 counters.increment("updatedAnnots");
@@ -415,7 +415,7 @@ public class GoAnnotManager {
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
                 counters.increment("totUnPubmed");
                 writeLogfile(logUnMatchedPubmed, ratGeneAssoc);
-                logRejected.info("Log File\t<No matching pubmed_id found in RGD>\t GO_ID="+ratGeneAssoc.getGoId()+"\tDB_REFERENCE="+ratGeneAssoc.getDbReferences());
+                logRejected.debug("Log File\t<No matching pubmed_id found in RGD>\t GO_ID="+ratGeneAssoc.getGoId()+"\tDB_REFERENCE="+ratGeneAssoc.getDbReferences());
             }
         }
 
@@ -440,7 +440,7 @@ public class GoAnnotManager {
         }
 
 
-		theLog.info("\t"+ratGeneAssoc.getDb()+"\t"+
+		theLog.debug("\t"+ratGeneAssoc.getDb()+"\t"+
 					ratGeneAssoc.getDbObjectId()+"\t"+
 					ratGeneAssoc.getDbObjectSymbol()+"\t"+
 					ratGeneAssoc.getQualifier()+"\t"+
