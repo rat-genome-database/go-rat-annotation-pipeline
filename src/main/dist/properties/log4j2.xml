@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <!-- <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/> -->
+            <PatternLayout pattern="[%d{yyyy-MM-hh HH:mm:ss}] %msg%n"/>
+        </Console>
+
+        <RollingFile name="status" append="true" fileName="logs/GoaSum.log" filePattern="logs/GoaSum.log.%d{yyyy-MM}">
+            <PatternLayout pattern="%d %p [%c] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <File name="summary" append="false" fileName="logs/GoaSummary.log">
+            <PatternLayout pattern="%m%n"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+        </File>
+        <RollingFile name="core" append="true" fileName="logs/core.log" filePattern="logs/core.log.%d{yyyy-MM}">
+            <PatternLayout pattern="%d %p [%c] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="unMatchedDbObjID" append="true" fileName="logs/unMatchedDbObjID.log" filePattern="logs/unMatchedDbObjID.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="unMatchedGOID" append="true" fileName="logs/unMatchedGOID.log" filePattern="logs/unMatchedGOID.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="duplAnnot" append="true" fileName="logs/duplAnnot.log" filePattern="logs/duplAnnot.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="unMatchedPubmed" append="true" fileName="logs/unMatchedPubmed.log" filePattern="logs/unMatchedPubmed.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="loaded" append="true" fileName="logs/GoaLoaded.log" filePattern="logs/GoaLoaded.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="deleted" append="true" fileName="logs/GoaDeleted.log" filePattern="logs/GoaDeleted.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="rejected" append="true" fileName="logs/GoaRejected.log" filePattern="logs/GoaRejected.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="highLevelGoTerm" append="true" fileName="logs/highLevelGoTerm.log" filePattern="logs/highLevelGoTerm.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="catalyticActivityIPIGoTerm" append="true" fileName="logs/catalyticActivityIPIGoTerm.log" filePattern="logs/catalyticActivityIPIGoTerm.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="importedReferences" append="true" fileName="logs/importedReferences.log" filePattern="logs/importedReferences.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="obsoleteRelInAnnotExt" append="true" fileName="logs/obsoleteRelInAnnotExt.log" filePattern="logs/obsoleteRelInAnnotExt.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="skippedAnnots" append="true" fileName="logs/skippedAnnots.log" filePattern="logs/skippedAnnots.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="updatedAnnots" append="true" fileName="logs/updatedAnnots.log" filePattern="logs/updatedAnnots.log.%d{yyyy-MM}">
+            <PatternLayout pattern="[%d] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+        <!-- daily -->
+        <Logger name="GoaSummary" level="debug" additivity="false">
+            <AppenderRef ref="status" level="info"/>
+            <AppenderRef ref="summary" level="info"/><!-- human readable -->
+            <AppenderRef ref="core" level="debug"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+
+        <!-- monthly -->
+        <Logger name="unMatchedDbObjID" level="debug" additivity="false">
+            <AppenderRef ref="unMatchedDbObjID"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="unMatchedGOID" level="debug" additivity="false">
+            <AppenderRef ref="unMatchedGOID"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="duplAnnot" level="debug" additivity="false">
+            <AppenderRef ref="duplAnnot"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="unMatchedPubmed" level="debug" additivity="false">
+            <AppenderRef ref="unMatchedPubmed"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="loaded" level="debug" additivity="false">
+            <AppenderRef ref="loaded"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="deleted" level="debug" additivity="false">
+            <AppenderRef ref="deleted"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="rejected" level="debug" additivity="false">
+            <AppenderRef ref="rejected"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="highLevelGoTerm" level="debug" additivity="false">
+            <AppenderRef ref="highLevelGoTerm"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="catalyticActivityIPIGoTerm" level="debug" additivity="false">
+            <AppenderRef ref="catalyticActivityIPIGoTerm"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="importedReferences" level="debug" additivity="false">
+            <AppenderRef ref="importedReferences"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="obsoleteRelInAnnotExt" level="debug" additivity="false">
+            <AppenderRef ref="obsoleteRelInAnnotExt"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="skippedAnnots" level="debug" additivity="false">
+            <AppenderRef ref="skippedAnnots"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+        <Logger name="updatedAnnots" level="debug" additivity="false">
+            <AppenderRef ref="updatedAnnots"/>
+            <AppenderRef ref="Console" level="info"/>
+        </Logger>
+    </Loggers>
+</Configuration>

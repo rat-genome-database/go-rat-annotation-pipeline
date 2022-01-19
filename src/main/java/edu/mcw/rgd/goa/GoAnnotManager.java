@@ -13,7 +13,8 @@ import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.FileSystemResource;
@@ -43,15 +44,15 @@ public class GoAnnotManager {
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
-	protected final Logger log = Logger.getLogger("GoaSummary");
-	protected final Logger logUnMatchedDbObjID = Logger.getLogger("unMatchedDbObjID");
-	protected final Logger logUnMatchedGOID = Logger.getLogger("unMatchedGOID");
-	protected final Logger logDuplAnnot = Logger.getLogger("duplAnnot"); // incoming annot matching annot in RGD
-	protected final Logger logUnMatchedPubmed = Logger.getLogger("unMatchedPubmed");
-	protected final Logger logLoaded = Logger.getLogger("loaded");
-	protected final Logger logRejected = Logger.getLogger("rejected");
-    protected final Logger logHighLevelGoTerm = Logger.getLogger("highLevelGoTerm");
-    protected final Logger logCatalyticActivityIPIGoTerm = Logger.getLogger("catalyticActivityIPIGoTerm");
+	final Logger log = LogManager.getLogger("GoaSummary");
+	final Logger logUnMatchedDbObjID = LogManager.getLogger("unMatchedDbObjID");
+	final Logger logUnMatchedGOID = LogManager.getLogger("unMatchedGOID");
+	final Logger logDuplAnnot = LogManager.getLogger("duplAnnot"); // incoming annot matching annot in RGD
+	final Logger logUnMatchedPubmed = LogManager.getLogger("unMatchedPubmed");
+	final Logger logLoaded = LogManager.getLogger("loaded");
+	final Logger logRejected = LogManager.getLogger("rejected");
+    final Logger logHighLevelGoTerm = LogManager.getLogger("highLevelGoTerm");
+    final Logger logCatalyticActivityIPIGoTerm = LogManager.getLogger("catalyticActivityIPIGoTerm");
 
     private String localFile;
     private String nonRgdFile;
@@ -462,9 +463,8 @@ public class GoAnnotManager {
     //  calls to sdt.format must be synchronized
     synchronized String formatDate(java.util.Date dt) {
         // date formatting is not synchronized :-(
-        return dt != null ? sdt.format(dt) : "";
+        return dt != null ? dateFormat.format(dt) : "";
     }
-    SimpleDateFormat sdt = new SimpleDateFormat("yyyyMMdd");
 
     public void setFullAnnotBean(Annotation fullAnnot, Gene geneInfo) {
 

@@ -7,7 +7,8 @@ import edu.mcw.rgd.datamodel.SpeciesType;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.datamodel.ontologyx.Term;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -18,7 +19,7 @@ import java.util.*;
  */
 public class Dao {
 
-    private final Logger logger = Logger.getLogger(getClass());
+    private final Logger logger = LogManager.getLogger(getClass());
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
     private OntologyXDAO ontDAO = new OntologyXDAO();
@@ -128,7 +129,7 @@ public class Dao {
 
         int currentAnnotCount = getCountOfAnnotations();
         List<Annotation> annotsForDelete = annotDAO.getAnnotationsModifiedBeforeTimestamp(createdBy, cutoffDate);
-        Logger logDelete = Logger.getLogger("deleted");
+        Logger logDelete = LogManager.getLogger("deleted");
         for( Annotation a: annotsForDelete ) {
             logDelete.info(a.dump("|"));
         }

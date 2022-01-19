@@ -3,7 +3,8 @@ package edu.mcw.rgd.goa;
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
 import edu.mcw.rgd.process.FileDownloader;
 import edu.mcw.rgd.process.Utils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,8 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PubMedManager {
 
-    protected final Logger log = Logger.getLogger("GoaSummary");
-    protected final Logger logImportedReferences = Logger.getLogger("importedReferences");
+    protected final Logger log = LogManager.getLogger("GoaSummary");
+    protected final Logger logImportedReferences = LogManager.getLogger("importedReferences");
 
     private String importPubMedUrl;
     private Map<String,String> importPubmedToolHost;

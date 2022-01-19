@@ -9,7 +9,8 @@ import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.Utils;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Created on Jan 30, 2007
@@ -24,9 +25,9 @@ public class DataValidationImpl {
     private int countOfRemovedObsoleteRelations = 0;
     private AnnotCache annotCache = new AnnotCache();
 
-    private Logger logObsoleteRelInAnnotExt = Logger.getLogger("obsoleteRelInAnnotExt");
-    private Logger logSkippedAnnots = Logger.getLogger("skippedAnnots");
-    private Logger logUpdatedAnnots = Logger.getLogger("updatedAnnots");
+    private Logger logObsoleteRelInAnnotExt = LogManager.getLogger("obsoleteRelInAnnotExt");
+    private Logger logSkippedAnnots = LogManager.getLogger("skippedAnnots");
+    private Logger logUpdatedAnnots = LogManager.getLogger("updatedAnnots");
 
     public int loadPipelineAnnotations() throws Exception {
         return annotCache.loadAnnotations(dao);

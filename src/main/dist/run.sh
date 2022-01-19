@@ -19,7 +19,7 @@ fi
 cd $APPDIR
 
 java -Dspring.config=$APPDIR/../properties/default_db2.xml \
-  -Dlog4j.configuration=file://$APPDIR/properties/log4j.properties \
+  -Dlog4j.configurationFile=file://$APPDIR/properties/log4j2.xml \
   -jar lib/${APPNAME}.jar "$@" > $APPDIR/run.log
 
 mailx -s "[$SERVER] GOA rat annotation pipeline" $EMAILLIST < $APPDIR/logs/GoaSummary.log
