@@ -1,5 +1,6 @@
 Jan 31, 2022
   code simplification
+  fixed logging of imported PMIDs
 
 Jan 18, 2022
   updated log4j to avoid zero day exploit

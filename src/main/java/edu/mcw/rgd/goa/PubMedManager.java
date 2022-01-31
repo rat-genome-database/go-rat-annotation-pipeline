@@ -6,8 +6,6 @@ import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.*;
@@ -116,7 +114,6 @@ public class PubMedManager {
     }
 
     /**
-     *
      * @param localFile local file name
      * @param pubMedId PubMed id
      * @return true if the reference with given PubMedId has been imported into RGD successfully
@@ -125,26 +122,18 @@ public class PubMedManager {
     boolean parseRefImportReport(String localFile, String pubMedId) throws IOException {
 
         // load entire report file into a string
-        String localFileContent = "";
-        String buf;
-        BufferedReader reader = new BufferedReader(new FileReader(localFile));
-        while( (buf=reader.readLine())!=null ) {
-            localFileContent += buf +"\n";
-        }
-        reader.close();
+        String localFileContent = Utils.readFileAsString(localFile).trim();
 
-        // if successful, the report will contain the RGD_ID of the imported reference
-        // f.e. "/rgdCuration/?module=curation&func=addReferenceToBucket&RGD_ID=7395592"
-        int pos1 = localFileContent.indexOf("RGD_ID=");
-        int pos2 = localFileContent.indexOf("\"", pos1);
-        if( pos1>0 && pos1<pos2 ) {
-            logImportedReferences.debug("   PMID:"+pubMedId+" ==> REF_"+localFileContent.substring(pos1, pos2));
+        // if successful, the report will contain the REF_RGD_ID of the imported reference and PMID
+        // f.e. "PMID:1825220 REF_RGD_ID:150521657"
+        if( localFileContent.contains("REF_RGD_ID") && localFileContent.contains("PMID") ) {
+            logImportedReferences.debug("   "+localFileContent);
             return true;
         }
 
         // if there is an error
-        pos1 = localFileContent.indexOf("<title>");
-        pos2 = localFileContent.indexOf("</title>");
+        int pos1 = localFileContent.indexOf("<title>");
+        int pos2 = localFileContent.indexOf("</title>");
         if( pos1>0 && pos1<pos2 ) {
             log.debug("   PMID:"+pubMedId+" - "+localFileContent.substring(pos1+7, pos2));
         }
