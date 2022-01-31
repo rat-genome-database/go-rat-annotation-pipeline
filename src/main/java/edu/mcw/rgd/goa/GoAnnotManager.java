@@ -5,7 +5,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
-import java.util.zip.GZIPOutputStream;
 
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
@@ -258,7 +257,7 @@ public class GoAnnotManager {
 
 	    List<RatGeneAssoc> recordsToProcess = new ArrayList<>(incomingRecords);
 
-	    final int maxRestarts = 1000;
+	    final int maxRestarts = 100;
 	    int restart=0;
 	    for( ; restart<maxRestarts; restart++ ) {
 
@@ -503,7 +502,7 @@ public class GoAnnotManager {
     // download all input files and merge them into one file
     void downloadInputFiles() throws Exception {
 
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(getLocalFile()))));
+        BufferedWriter out = Utils.openWriter(getLocalFile());
         for( String goaRatFile: getGoaRatFiles() ) {
             FileDownloader downloader = new FileDownloader();
             downloader.setExternalFile(goaRatFile);
@@ -533,8 +532,8 @@ public class GoAnnotManager {
 
         // extract NON_RGD records
         // (column 14 must be different than RGD)
-        BufferedWriter nonRgdFile = new BufferedWriter(new FileWriter(this.getNonRgdFile()));
-        BufferedWriter goaFile = new BufferedWriter(new FileWriter(this.getGoaFile()));
+        BufferedWriter nonRgdFile = Utils.openWriter(this.getNonRgdFile());
+        BufferedWriter goaFile = Utils.openWriter(this.getGoaFile());
 
         int linesInInputFile = 0;
         int linesInNonRgdFile = 0;
@@ -577,7 +576,7 @@ public class GoAnnotManager {
         appendFile("logs/duplAnnot.log", uniqueLines);
         appendFile("logs/unMatchedDbObjID.log", uniqueLines);
 
-        BufferedWriter goaFile = new BufferedWriter(new FileWriter(this.getGoaRgdTxt()));
+        BufferedWriter goaFile = Utils.openWriter(this.getGoaRgdTxt());
         for( String gafLine: uniqueLines ) {
             goaFile.write(gafLine);
         }
@@ -587,7 +586,7 @@ public class GoAnnotManager {
     }
 
     void appendFile(String inFile, Set<String> lineSet) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(inFile));
+        BufferedReader reader = Utils.openReader(inFile);
         String line;
 
         while( (line=reader.readLine())!=null ) {
