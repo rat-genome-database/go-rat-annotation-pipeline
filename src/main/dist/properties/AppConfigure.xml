@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="GOA rat annotation pipeline  -- build Jan 31, 2022" />
+        <property name="version" value="GOA rat annotation pipeline  -- build Mar 28, 2022" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
         <property name="pubMedManager" ref="pubMedManager"/>
@@ -41,7 +41,8 @@
                 <value>1303377</value><!-- olfactory genes one-time load-->
                 <value>1600115</value><!-- RAT GO annotations -->
                 <value>2290270</value><!-- mouse GO annotations -->
-                <value>2290271</value><!-- human GO annotations -->
+                <value>2290271</value><!-- human GO annotations (obsolete) -->
+                <value>150520179</value><!-- all species GO annotations, except mouse and rat -->
             </set>
         </property>
 
