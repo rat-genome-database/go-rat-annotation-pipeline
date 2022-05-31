@@ -1,3 +1,6 @@
+May 31, 2022
+  improved exception reporting
+
 May 23, 2022
   tuned up logging
   

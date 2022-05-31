@@ -22,7 +22,7 @@ import edu.mcw.rgd.log.RGDSpringLogger;
 
 
 /**
- * Processes files in gaf2.1 format
+ * Processes files in gaf2.2 format
  * <p>
  * In the last stage of processing the pipeline performs update on annotations for Olr gene.
  * <p>
@@ -190,7 +190,9 @@ public class GoAnnotManager {
         getPubMedManager().importMissingPubmedEntries(dao, incomingRecords);
 
         // do quality check for each row of data
-        qcAll(incomingRecords);
+        if( !qcAll(incomingRecords) ) {
+            throw new Exception("LOGIC FAILURE! Aborting pipeline!");
+        }
 
         dao.finalizeUpdates();
 
@@ -253,13 +255,13 @@ public class GoAnnotManager {
         return incomingRecords;
     }
 
-    void qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
+    boolean qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
 
 	    List<RatGeneAssoc> recordsToProcess = new ArrayList<>(incomingRecords);
 
-	    final int maxRestarts = 100;
+	    final int MAX_RESTARTS = 100;
 	    int restart=0;
-	    for( ; restart<maxRestarts; restart++ ) {
+	    for( ; restart<MAX_RESTARTS; restart++ ) {
 
 	        log.info("    starting qc for "+recordsToProcess.size()+" records, iteration "+restart);
 
@@ -291,8 +293,13 @@ public class GoAnnotManager {
         }
         if( restart!=0 ) {
             counters.add("qcRestarts", restart);
+            if( restart>=MAX_RESTARTS ) {
+                log.warn("TOO MANY QC RESTARTS! Rerun the pipeline!");
+                return false;
+            }
         }
-        log.info("    finished qc, iteration "+restart);
+        log.info("    finished qc, iterations "+restart);
+        return true;
     }
 
     String qcQualifier(String qualifier) throws Exception {
