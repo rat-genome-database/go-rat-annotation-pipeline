@@ -6,7 +6,7 @@
 #    that had not been loaded into RGD database (duplicates and not matching RGD genes)
 . /etc/profile
 
-APPNAME=GOAannotation
+APPNAME="go-rat-annotation-pipeline"
 APPDIR=/home/rgddata/pipelines/$APPNAME
 
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
