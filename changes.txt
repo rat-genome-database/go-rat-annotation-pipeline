@@ -1,3 +1,6 @@
+Jul 01, 2022
+  patch to avoid corruption of AnnotCache
+
 Jun 24, 2022
   renamed distro to 'go-rat-annotation-pipeline'
 

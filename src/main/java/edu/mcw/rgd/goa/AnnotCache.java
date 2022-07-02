@@ -24,13 +24,7 @@ public class AnnotCache {
 
 		List<Annotation> annotations = dao.getAllAnnotations();
 		for( Annotation a: annotations ) {
-			String annotKey = createAnnotKey(a);
-			Annotation aOld = _cacheMap.put(annotKey, a);
-			if( aOld!=null ) {
-				System.out.println("unexpected: duplicate annot");
-				System.out.println("   "+aOld.dump("|"));
-				System.out.println("   "+a.dump("|"));
-			}
+			insert(a);
 		}
 		return annotations.size();
 	}
@@ -42,14 +36,28 @@ public class AnnotCache {
      */
 	public Annotation getAnnotInRgd(Annotation a) {
 		String annotKey = createAnnotKey(a);
+
+		Annotation annotInRgd = _cacheMap.get(annotKey);
+		if( annotInRgd!=null ) {
+			int rgdDiff = annotInRgd.getAnnotatedObjectRgdId() - a.getAnnotatedObjectRgdId();
+			if( rgdDiff!=0 ) {
+				throw new RuntimeException("cache consistency problem");
+			}
+		}
 		return _cacheMap.get(annotKey);
 	}
 
 	public void insert(Annotation a) throws Exception {
 		String annotKey = createAnnotKey(a);
-		Annotation oldAnnot = _cacheMap.put(annotKey, a);
+
+		// to avoid corruption of the hashmap, we clone the annotation inserted
+		Annotation aCopy = (Annotation) a.clone();
+
+		Annotation oldAnnot = _cacheMap.put(annotKey, aCopy);
 		if( oldAnnot!=null ) {
-			throw new Exception("unexpected: duplicate annot: "+a.dump("|"));
+			System.out.println("unexpected: duplicate annot");
+			System.out.println("   "+oldAnnot.dump("|"));
+			System.out.println("   "+a.dump("|"));
 		}
 	}
 

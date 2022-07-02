@@ -20,6 +20,7 @@ import java.util.*;
 public class Dao {
 
     private final Logger logger = LogManager.getLogger(getClass());
+    private final Logger log = LogManager.getLogger("GoaSummary");
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
     private OntologyXDAO ontDAO = new OntologyXDAO();
@@ -176,7 +177,16 @@ public class Dao {
         fa.setLastModifiedBy(lastModifiedBy);
         fa.setLastModifiedDate(new Date());
 
-        annotDAO.updateAnnotation(fa);
+        try {
+            annotDAO.updateAnnotation(fa);
+        } catch(org.springframework.dao.DuplicateKeyException e) {
+
+            Annotation aInRgd = annotDAO.getAnnotation(fa.getKey());
+            log.debug("========\nDUPLICATE KEY EXCEPTION in updateFullAnnot\n"+
+                    "ANNOT_IN_RGD: "+aInRgd.dump("|")+"\n"+
+                    "ANNOT_INCOMING: "+fa.dump("|"));
+            throw e;
+        }
     }
 
     public void init() {
