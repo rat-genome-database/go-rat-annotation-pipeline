@@ -81,7 +81,13 @@ public class GoAnnotManager {
 
 	public void startGoaPipeline() throws Exception {
 
-        getLogger().info("----- "+getVersion()+" Starts ------");
+        getLogger().info("----- "+getVersion());
+
+        Date dateStart = new Date();
+        SimpleDateFormat sdt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        log.info("  started at: "+sdt.format(dateStart));
+        log.info("  "+getDao().getConnectionInfo());
+        log.info("===");
 
         dataValidation.setDao(getDao());
 
@@ -503,7 +509,7 @@ public class GoAnnotManager {
         downloader.setAppendDateStamp(true);
 
         goRelLocalFile = downloader.download();
-        log.info("downloaded "+downloader.getLocalFile());
+        log.debug("downloaded "+downloader.getLocalFile());
     }
 
     // download all input files and merge them into one file
@@ -518,7 +524,7 @@ public class GoAnnotManager {
             downloader.setAppendDateStamp(true);
 
             String localFile = downloader.download();
-            log.info("downloaded "+downloader.getLocalFile());
+            log.debug("downloaded "+downloader.getLocalFile());
             BufferedReader reader = Utils.openReader(localFile);
             String line;
             while( (line=reader.readLine())!=null ) {

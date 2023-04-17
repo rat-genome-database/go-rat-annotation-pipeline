@@ -19,7 +19,6 @@ import java.util.*;
  */
 public class Dao {
 
-    private final Logger logger = LogManager.getLogger(getClass());
     private final Logger log = LogManager.getLogger("GoaSummary");
 
     private AnnotationDAO annotDAO = new AnnotationDAO();
@@ -30,6 +29,10 @@ public class Dao {
     private int createdBy;
     private int lastModifiedBy;
     private String staleAnnotDeleteThreshold;
+
+    public String getConnectionInfo() {
+        return ontDAO.getConnectionInfo();
+    }
 
     /**
      * return a term by term accession id
@@ -86,13 +89,7 @@ public class Dao {
             list = xdbIdDAO.getActiveGenesByXdbId(xdbkey, accid);
 
             // remove non-rat objects
-            Iterator<Gene> it = list.iterator();
-            while( it.hasNext() ) {
-                Gene ge = it.next();
-                if( ge.getSpeciesTypeKey()!=SpeciesType.RAT ) {
-                    it.remove();
-                }
-            }
+            list.removeIf(ge -> ge.getSpeciesTypeKey() != SpeciesType.RAT);
 
             _cacheGE.put(key, list);
         }
@@ -148,7 +145,7 @@ public class Dao {
 
         // delete stale annotations
         int rowsDeleted = annotDAO.deleteAnnotations(getCreatedBy(), cutoffDate);
-        logger.debug("Rows deleted from full_annot table: "+ rowsDeleted);
+        log.debug("Rows deleted from full_annot table: "+ rowsDeleted);
         return rowsDeleted;
     }
 
@@ -208,7 +205,7 @@ public class Dao {
 
     private void updateLastModified(List<Integer> fullAnnotKeys) throws Exception {
         int updated = annotDAO.updateLastModified(fullAnnotKeys);
-        logger.debug("updated last modified date for "+updated+" rows");
+        log.debug("updated last modified date for "+updated+" rows");
         fullAnnotKeys.clear();
     }
     private List<Integer> _updateLastModified = null;
