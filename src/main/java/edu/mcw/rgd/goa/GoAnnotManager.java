@@ -62,6 +62,7 @@ public class GoAnnotManager {
     private String goRelFile;
     private Set<Integer> refRgdIdsForGoPipelines;
     private Map<String,String> sourceSubst;
+    private Map<String,String> qualifierSubst;
     private String threeMonthOldDate;
     private PubMedManager pubMedManager;
 
@@ -316,6 +317,11 @@ public class GoAnnotManager {
                     //throw new Exception("Unrecognized qualifier: "+q);
                     log.warn("Unrecognized qualifier: "+q);
                 }
+            }
+
+            if( getQualifierSubst().containsKey(qualifier) ) {
+                qualifier = getQualifierSubst().get(qualifier);
+                counters.increment("qualifier substitutions");
             }
         }
         return qualifier;
@@ -758,6 +764,14 @@ public class GoAnnotManager {
 
     public Map<String,String> getSourceSubst() {
         return sourceSubst;
+    }
+
+    public Map<String, String> getQualifierSubst() {
+        return qualifierSubst;
+    }
+
+    public void setQualifierSubst(Map<String, String> qualifierSubst) {
+        this.qualifierSubst = qualifierSubst;
     }
 
     public PubMedManager getPubMedManager() {

@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="GOA rat annotation pipeline  -- build Jan 16, 2023" />
+        <property name="version" value="GOA rat annotation pipeline  -- build Jan 19, 2023" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
         <property name="pubMedManager" ref="pubMedManager"/>
@@ -49,6 +49,13 @@
         <property name="sourceSubst">
             <map>
                 <entry key="UniProtKB" value="UniProt" />
+            </map>
+        </property>
+
+        <property name="qualifierSubst">
+            <map>
+                <entry key="colocalizes_with" value="located_in" />
+                <entry key="NOT|colocalizes_with" value="NOT|located_in" />
             </map>
         </property>
     </bean>
