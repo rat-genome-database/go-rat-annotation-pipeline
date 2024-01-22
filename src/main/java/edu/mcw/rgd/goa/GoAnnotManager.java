@@ -119,6 +119,7 @@ public class GoAnnotManager {
         int rowDeleted = counters.get("rowDeleted");
         int qcRestarts = counters.get("qcRestarts");
         int createdDateUpdated = counters.get("createdDateUpdated");
+        int qualifierSubstitutions = counters.get("qualifier substitutions");
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -151,6 +152,7 @@ public class GoAnnotManager {
         log.info("*** IEA GO annots with updated created date: "+IEA_GO_annotsWithUpdatedCreatedDate);
         log.info("*** IEA GO annots with untouched created date: "+IEA_GO_annotsWithUntouchedCreatedDate);
         log.info("*** DATA_SRC substitutions: "+dataSourceSubstitutions);
+        log.info("*** qualifier colocalizes_with substitutions: "+qualifierSubstitutions);
 		log.info("-----------------------------------------");
 		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec));
 		
@@ -276,7 +278,7 @@ public class GoAnnotManager {
 
             counters = new CounterPool();
             counters.merge(originalCounters);
-            
+
             boolean doRestart = false;
             Collections.shuffle(recordsToProcess);
 
