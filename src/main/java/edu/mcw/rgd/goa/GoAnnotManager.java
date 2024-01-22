@@ -38,7 +38,7 @@ public class GoAnnotManager {
     String goRelLocalFile;
 
     int specialRefRgdId;
-    CounterPool counters;
+    CounterPool counters = new CounterPool();
 
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
@@ -264,6 +264,8 @@ public class GoAnnotManager {
 
     boolean qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
 
+        CounterPool originalCounters = counters;
+
 	    List<RatGeneAssoc> recordsToProcess = new ArrayList<>(incomingRecords);
 
 	    final int MAX_RESTARTS = 100;
@@ -273,7 +275,8 @@ public class GoAnnotManager {
 	        log.info("    starting qc for "+recordsToProcess.size()+" records, iteration "+restart);
 
             counters = new CounterPool();
-
+            counters.merge(originalCounters);
+            
             boolean doRestart = false;
             Collections.shuffle(recordsToProcess);
 
