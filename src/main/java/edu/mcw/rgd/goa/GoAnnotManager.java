@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
@@ -38,7 +39,7 @@ public class GoAnnotManager {
     String goRelLocalFile;
 
     int specialRefRgdId;
-    CounterPool counters;
+    CounterPool counters = new CounterPool();
 
 	static long startMilisec=System.currentTimeMillis();
     static DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
@@ -62,6 +63,7 @@ public class GoAnnotManager {
     private String goRelFile;
     private Set<Integer> refRgdIdsForGoPipelines;
     private Map<String,String> sourceSubst;
+    private Map<String,String> qualifierSubst;
     private String threeMonthOldDate;
     private PubMedManager pubMedManager;
 
@@ -118,6 +120,7 @@ public class GoAnnotManager {
         int rowDeleted = counters.get("rowDeleted");
         int qcRestarts = counters.get("qcRestarts");
         int createdDateUpdated = counters.get("createdDateUpdated");
+        int qualifierSubstitutions = counters.get("qualifier substitutions");
 
 		//generate summary for sending email.
 		long endMilisec=System.currentTimeMillis();
@@ -150,6 +153,7 @@ public class GoAnnotManager {
         log.info("*** IEA GO annots with updated created date: "+IEA_GO_annotsWithUpdatedCreatedDate);
         log.info("*** IEA GO annots with untouched created date: "+IEA_GO_annotsWithUntouchedCreatedDate);
         log.info("*** DATA_SRC substitutions: "+dataSourceSubstitutions);
+        log.info("*** qualifier colocalizes_with substitutions: "+qualifierSubstitutions);
 		log.info("-----------------------------------------");
 		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec));
 		
@@ -263,6 +267,8 @@ public class GoAnnotManager {
 
     boolean qcAll(List<RatGeneAssoc> incomingRecords) throws Exception {
 
+        CounterPool originalCounters = counters;
+
 	    List<RatGeneAssoc> recordsToProcess = new ArrayList<>(incomingRecords);
 
 	    final int MAX_RESTARTS = 100;
@@ -272,6 +278,7 @@ public class GoAnnotManager {
 	        log.info("    starting qc for "+recordsToProcess.size()+" records, iteration "+restart);
 
             counters = new CounterPool();
+            counters.merge(originalCounters);
 
             boolean doRestart = false;
             Collections.shuffle(recordsToProcess);
@@ -313,14 +320,21 @@ public class GoAnnotManager {
             // multiple qualifiers are possible, f.e.: 'NOT|contributes_to'
             for( String q: qualifier.split("[\\|]") ) {
                 if( !dao.getOntologyQualifiers().contains(q) ) {
-                    //throw new Exception("Unrecognized qualifier: "+q);
-                    log.warn("Unrecognized qualifier: "+q);
+                    boolean first = _unrecognizedQualifiers.add(q);
+                    if( first ) {
+                        log.warn("Unrecognized qualifier: " + q);
+                    }
                 }
+            }
+
+            if( getQualifierSubst().containsKey(qualifier) ) {
+                qualifier = getQualifierSubst().get(qualifier);
+                counters.increment("qualifier substitutions");
             }
         }
         return qualifier;
     }
-
+    static Set<String> _unrecognizedQualifiers = new ConcurrentSkipListSet<>();
 
 	public boolean qualityCheck(RatGeneAssoc rec) throws Exception {
 
@@ -758,6 +772,14 @@ public class GoAnnotManager {
 
     public Map<String,String> getSourceSubst() {
         return sourceSubst;
+    }
+
+    public Map<String, String> getQualifierSubst() {
+        return qualifierSubst;
+    }
+
+    public void setQualifierSubst(Map<String, String> qualifierSubst) {
+        this.qualifierSubst = qualifierSubst;
     }
 
     public PubMedManager getPubMedManager() {
