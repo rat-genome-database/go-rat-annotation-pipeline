@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
@@ -319,8 +320,10 @@ public class GoAnnotManager {
             // multiple qualifiers are possible, f.e.: 'NOT|contributes_to'
             for( String q: qualifier.split("[\\|]") ) {
                 if( !dao.getOntologyQualifiers().contains(q) ) {
-                    //throw new Exception("Unrecognized qualifier: "+q);
-                    log.warn("Unrecognized qualifier: "+q);
+                    boolean first = _unrecognizedQualifiers.add(q);
+                    if( first ) {
+                        log.warn("Unrecognized qualifier: " + q);
+                    }
                 }
             }
 
@@ -331,7 +334,7 @@ public class GoAnnotManager {
         }
         return qualifier;
     }
-
+    static Set<String> _unrecognizedQualifiers = new ConcurrentSkipListSet<>();
 
 	public boolean qualityCheck(RatGeneAssoc rec) throws Exception {
 
