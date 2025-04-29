@@ -154,6 +154,9 @@ public class GoAnnotManager {
         log.info("*** IEA GO annots with untouched created date: "+IEA_GO_annotsWithUntouchedCreatedDate);
         log.info("*** DATA_SRC substitutions: "+dataSourceSubstitutions);
         log.info("*** qualifier colocalizes_with substitutions: "+qualifierSubstitutions);
+        for( Map.Entry<String, Integer> entry: _unrecognizedQualifiers.entrySet() ) {
+            log.info("*** unrecognized qualifier: "+entry.getKey()+",  "+entry.getValue()+" occurrences");
+        }
 		log.info("-----------------------------------------");
 		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec));
 		
@@ -320,9 +323,13 @@ public class GoAnnotManager {
             // multiple qualifiers are possible, f.e.: 'NOT|contributes_to'
             for( String q: qualifier.split("[\\|]") ) {
                 if( !dao.getOntologyQualifiers().contains(q) ) {
-                    boolean first = _unrecognizedQualifiers.add(q);
-                    if( first ) {
-                        log.warn("Unrecognized qualifier: " + q);
+                    synchronized (_unrecognizedQualifiers) {
+                        Integer count = _unrecognizedQualifiers.get(q);
+                        if( count == null ) {
+                            count = 0;
+                        }
+                        count++;
+                        _unrecognizedQualifiers.put(q, count);
                     }
                 }
             }
@@ -334,7 +341,7 @@ public class GoAnnotManager {
         }
         return qualifier;
     }
-    static Set<String> _unrecognizedQualifiers = new ConcurrentSkipListSet<>();
+    static Map<String, Integer> _unrecognizedQualifiers = new TreeMap<>();
 
 	public boolean qualityCheck(RatGeneAssoc rec) throws Exception {
 

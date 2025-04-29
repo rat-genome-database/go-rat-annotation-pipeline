@@ -1,3 +1,6 @@
+Apr 29, 2025
+  tuned up logging
+
 Nov 12, 2024
   github: renamed dist branch from 'master' to 'main'
 
