@@ -11,7 +11,7 @@ APPDIR=/home/rgddata/pipelines/$APPNAME
 
 SERVER=`hostname -s | tr '[a-z]' '[A-Z]'`
 if [ "$SERVER" == "REED" ]; then
-  EMAILLIST=rgd.devops@mcw.edu,jrsmith@mcw.edu,slaulederkind@mcw.edu
+  EMAILLIST="rgd.devops@mcw.edu jrsmith@mcw.edu slaulederkind@mcw.edu"
 else
   EMAILLIST=mtutaj@mcw.edu
 fi
