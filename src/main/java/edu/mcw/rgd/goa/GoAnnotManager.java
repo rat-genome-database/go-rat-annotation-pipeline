@@ -436,7 +436,7 @@ public class GoAnnotManager {
             } else if( code==0 ){ // up-to-date
                 counters.increment("totDups");
 
-                writeLogfile(logDuplAnnot, ratGeneAssoc);
+                writeLogfile(logDuplAnnot, ratGeneAssoc, true);
                 dao.updateLastModified(fullAnnot.getKey());
             } else if( code==1 ){
                 counters.increment("skippedAnnots");
@@ -447,7 +447,7 @@ public class GoAnnotManager {
 
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
                 counters.increment("totUnPubmed");
-                writeLogfile(logUnMatchedPubmed, ratGeneAssoc);
+                writeLogfile(logUnMatchedPubmed, ratGeneAssoc, true);
                 logRejected.debug("Log File\t<No matching pubmed_id found in RGD>\t GO_ID="+ratGeneAssoc.getGoId()+"\tDB_REFERENCE="+ratGeneAssoc.getDbReferences());
             }
         }
@@ -455,7 +455,15 @@ public class GoAnnotManager {
         return true;
 	}
 
-	public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc) {
+    public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc, boolean test) {
+
+        if( Utils.defaultString(ratGeneAssoc.getWith()).contains("ensembl") ) {
+            log.debug("*** ensembl: "+ratGeneAssoc.getWith());
+        }
+        writeLogfile(theLog, ratGeneAssoc);
+    }
+
+    public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc) {
 
         // export data in gaf 2.2 format
         //
