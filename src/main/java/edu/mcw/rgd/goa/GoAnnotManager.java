@@ -12,6 +12,7 @@ import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.CounterPool;
 import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.MemoryMonitor;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +85,9 @@ public class GoAnnotManager {
 	public void startGoaPipeline() throws Exception {
 
         getLogger().info("----- "+getVersion());
+
+        MemoryMonitor memoryMonitor = new MemoryMonitor();
+        memoryMonitor.start();
 
         Date dateStart = new Date();
         SimpleDateFormat sdt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -158,6 +162,8 @@ public class GoAnnotManager {
             log.info("*** unrecognized qualifier: "+entry.getKey()+",  "+entry.getValue()+" occurrences");
         }
 		log.info("-----------------------------------------");
+		memoryMonitor.stop();
+		log.info(memoryMonitor.getSummary());
 		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec));
 		
 		//store info in Database log table report_extracts

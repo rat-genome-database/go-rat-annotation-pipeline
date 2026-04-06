@@ -31,7 +31,7 @@ public class AnnotCache {
 
 	/**
 	 *
-	 * @param a incoming annotation (requires REF_RGD_ID, RGD_ID, TERM_ACC, XREF_SOURCE, QUALIFIER, WITH_INFO, EVIDENCE to be set
+	 * @param a incoming annotation (requires REF_RGD_ID, RGD_ID, TERM_ACC, XREF_SOURCE, QUALIFIER, WITH_INFO, EVIDENCE, QUALIFIER2, ASSOCIATED_WITH to be set
 	 * @return Annotation object in RGD, or null
      */
 	public Annotation getAnnotInRgd(Annotation a) {
@@ -66,6 +66,8 @@ public class AnnotCache {
 				+"|" + Utils.defaultString(a.getXrefSource())
 				+"|" + Utils.defaultString(a.getQualifier())
 				+"|" + Utils.defaultString(a.getWithInfo())
-				+"|" + Utils.defaultString(a.getEvidence());
+				+"|" + Utils.defaultString(a.getEvidence())
+				+"|" + Utils.defaultString(a.getQualifier2())
+				+"|" + Utils.defaultString(a.getAssociatedWith());
 	}
 }
