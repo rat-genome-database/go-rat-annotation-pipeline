@@ -1,3 +1,6 @@
+May 01, 2026
+  updated README.md; updated dependencies
+
 Apr 06, 2026
   added MemoryMonitor; added qualifier2 and associatedWith to annotation key; updated dependencies
 
