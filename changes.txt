@@ -1,3 +1,6 @@
+May 05, 2026
+  switched goa file urls from ftp:// to https://; updated dependencies
+
 May 01, 2026
   updated README.md; updated dependencies
 

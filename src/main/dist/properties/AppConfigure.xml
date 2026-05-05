@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="go-rat-annotation-pipeline  -- build May 01, 2026" />
+        <property name="version" value="go-rat-annotation-pipeline  -- build May 05, 2026" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
         <property name="pubMedManager" ref="pubMedManager"/>
@@ -13,10 +13,10 @@
 
         <property name="goaRatFiles">
             <list>
-                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat.gaf.gz</value>
-                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_complex.gaf.gz</value>
-                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_isoform.gaf.gz</value>
-                <value>ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_rna.gaf.gz</value>
+                <value>https://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat.gaf.gz</value>
+                <value>https://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_complex.gaf.gz</value>
+                <value>https://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_isoform.gaf.gz</value>
+                <value>https://ftp.ebi.ac.uk/pub/databases/GO/goa/RAT/goa_rat_rna.gaf.gz</value>
                 <!--<value>file:///tmp/all.gaf.gz</value>-->
             </list>
         </property>
