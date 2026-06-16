@@ -2,14 +2,14 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="go-rat-annotation-pipeline  -- build May 05, 2026" />
+        <property name="version" value="go-rat-annotation-pipeline  -- build Jun 16, 2026" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
         <property name="pubMedManager" ref="pubMedManager"/>
 
 	    <property name="specialRefRgdId" value="1600115"/>
 
-        <property name="goRelFile" value="http://current.geneontology.org/ontology/extensions/gorel.obo"/>
+        <property name="goRelFile" value="https://current.geneontology.org/ontology/extensions/gorel.obo"/>
 
         <property name="goaRatFiles">
             <list>

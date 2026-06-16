@@ -11,7 +11,7 @@ import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.CounterPool;
-import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.FileDownloader2;
 import edu.mcw.rgd.process.MemoryMonitor;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
@@ -537,7 +537,7 @@ public class GoAnnotManager {
     }
 
     void downloadGoRelFile() throws Exception {
-        FileDownloader downloader = new FileDownloader();
+        FileDownloader2 downloader = new FileDownloader2();
         downloader.setExternalFile(getGoRelFile());
         downloader.setLocalFile("data/gorel.obo");
         downloader.setUseCompression(true);
@@ -552,7 +552,7 @@ public class GoAnnotManager {
 
         BufferedWriter out = Utils.openWriter(getLocalFile());
         for( String goaRatFile: getGoaRatFiles() ) {
-            FileDownloader downloader = new FileDownloader();
+            FileDownloader2 downloader = new FileDownloader2();
             downloader.setExternalFile(goaRatFile);
             downloader.setLocalFile("data/"+goaRatFile.substring(1+goaRatFile.lastIndexOf('/')));
             downloader.setUseCompression(false);

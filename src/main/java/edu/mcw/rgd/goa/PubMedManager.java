@@ -1,7 +1,7 @@
 package edu.mcw.rgd.goa;
 
 import edu.mcw.rgd.dao.spring.IntStringMapQuery;
-import edu.mcw.rgd.process.FileDownloader;
+import edu.mcw.rgd.process.FileDownloader2;
 import edu.mcw.rgd.process.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,7 +98,7 @@ public class PubMedManager {
         for( String pubMedId: pubMedIdsToImport ) {
             String extFile = pubmedToolHostUrl+getImportPubMedUrl()+pubMedId;
 
-            FileDownloader downloader = new FileDownloader();
+            FileDownloader2 downloader = new FileDownloader2();
             downloader.setExternalFile(extFile);
             downloader.setLocalFile("data/pmid_"+pubMedId+".html");
             downloader.setPrependDateStamp(true);

@@ -1,3 +1,6 @@
+Jun 16, 2026
+  switched to FileDownloader2 (dropped commons-net and httpclient); gorel.obo url to https; removed an email recipient
+
 May 05, 2026
   switched goa file urls from ftp:// to https://; updated dependencies
 
