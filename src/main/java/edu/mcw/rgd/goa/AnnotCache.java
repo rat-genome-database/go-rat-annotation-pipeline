@@ -3,6 +3,8 @@ package edu.mcw.rgd.goa;
 
 import edu.mcw.rgd.datamodel.ontology.Annotation;
 import edu.mcw.rgd.process.Utils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.Map;
  * @since 2020-03-03
  */
 public class AnnotCache {
+
+	private static final Logger log = LogManager.getLogger("GoaSummary");
 
 	private Map<String, Annotation> _cacheMap = new HashMap<>();
 
@@ -55,9 +59,9 @@ public class AnnotCache {
 
 		Annotation oldAnnot = _cacheMap.put(annotKey, aCopy);
 		if( oldAnnot!=null ) {
-			System.out.println("unexpected: duplicate annot");
-			System.out.println("   "+oldAnnot.dump("|"));
-			System.out.println("   "+a.dump("|"));
+			log.warn("unexpected: duplicate annot"
+				+"\n   "+oldAnnot.dump("|")
+				+"\n   "+a.dump("|"));
 		}
 	}
 

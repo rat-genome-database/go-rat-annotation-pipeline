@@ -2,7 +2,7 @@
 <beans>
 
 	<bean id="goAnnotManager" class="edu.mcw.rgd.goa.GoAnnotManager">
-        <property name="version" value="go-rat-annotation-pipeline  -- build Jun 16, 2026" />
+        <property name="version" value="go-rat-annotation-pipeline  -- build Jun 29, 2026" />
 	    <property name="dataValidation" ref="dataValidation"/>
 	    <property name="dao" ref="dao"/>
         <property name="pubMedManager" ref="pubMedManager"/>

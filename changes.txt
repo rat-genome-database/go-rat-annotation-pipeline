@@ -1,3 +1,6 @@
+Jun 29, 2026
+  code cleanup: exit with a non-zero code on failure; logging via log4j instead of System.out; removed dead code; updated dependencies
+
 Jun 16, 2026
   switched to FileDownloader2 (dropped commons-net and httpclient); gorel.obo url to https; removed an email recipient
 

@@ -5,7 +5,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import edu.mcw.rgd.datamodel.Gene;
 import edu.mcw.rgd.datamodel.RgdId;
@@ -79,6 +78,7 @@ public class GoAnnotManager {
         } catch( Exception e ) {
             Utils.printStackTrace(e, goAnnotManager.getLogger());
             goAnnotManager.getLogger().info( goAnnotManager.counters.dumpAlphabetically() );
+            throw e; // rethrow so a failed run exits with a non-zero code
         }
 	}
 
@@ -164,7 +164,7 @@ public class GoAnnotManager {
 		log.info("-----------------------------------------");
 		memoryMonitor.stop();
 		log.info(memoryMonitor.getSummary());
-		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec));
+		log.info("Processing time elapsed: "+ Utils.formatElapsedTime(startMilisec, endMilisec)+"\n");
 		
 		//store info in Database log table report_extracts
 		rgdLogger.log("GOAnnoationsRat","GOAAnnotIncoming",linenum);
@@ -442,7 +442,7 @@ public class GoAnnotManager {
             } else if( code==0 ){ // up-to-date
                 counters.increment("totDups");
 
-                writeLogfile(logDuplAnnot, ratGeneAssoc, true);
+                writeLogfile(logDuplAnnot, ratGeneAssoc);
                 dao.updateLastModified(fullAnnot.getKey());
             } else if( code==1 ){
                 counters.increment("skippedAnnots");
@@ -453,7 +453,7 @@ public class GoAnnotManager {
 
             if( fullAnnot.getRefRgdId()!=null && fullAnnot.getRefRgdId()==0 ) {
                 counters.increment("totUnPubmed");
-                writeLogfile(logUnMatchedPubmed, ratGeneAssoc, true);
+                writeLogfile(logUnMatchedPubmed, ratGeneAssoc);
                 logRejected.debug("Log File\t<No matching pubmed_id found in RGD>\t GO_ID="+ratGeneAssoc.getGoId()+"\tDB_REFERENCE="+ratGeneAssoc.getDbReferences());
             }
         }
@@ -461,15 +461,11 @@ public class GoAnnotManager {
         return true;
 	}
 
-    public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc, boolean test) {
+    public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc) {
 
         if( Utils.defaultString(ratGeneAssoc.getWith()).contains("ensembl") ) {
             log.debug("*** ensembl: "+ratGeneAssoc.getWith());
         }
-        writeLogfile(theLog, ratGeneAssoc);
-    }
-
-    public void writeLogfile(Logger theLog, RatGeneAssoc ratGeneAssoc) {
 
         // export data in gaf 2.2 format
         //
