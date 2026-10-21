@@ -163,8 +163,12 @@ public class Dao {
         try {
             annotDAO.insertAnnotation(fa);
             return true;
-        } catch(java.sql.SQLIntegrityConstraintViolationException e) {
-            return false;
+        } catch(java.sql.SQLException e) {
+            // unique constraint violation (SQLState 23505): such annotation is already in RGD -- skip it
+            if( "23505".equals(e.getSQLState()) ) {
+                return false;
+            }
+            throw e;
         }
     }
 
