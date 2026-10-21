@@ -1,3 +1,6 @@
+Oct 21, 2026
+  migrated to postgres; updated dependencies
+
 Jun 29, 2026
   code cleanup: exit with a non-zero code on failure; logging via log4j instead of System.out; removed dead code; updated dependencies
 
