@@ -23,6 +23,7 @@ public class DataValidationImpl {
     private Set<String> obsoleteRelations; // obsolete relations loaded from gorel.obo
     private int annotationsWithRemovedObsoleteRelations = 0;
     private int countOfRemovedObsoleteRelations = 0;
+    private int countOfRemovedMalformedExtensions = 0;
     private AnnotCache annotCache = new AnnotCache();
 
     private Logger logObsoleteRelInAnnotExt = LogManager.getLogger("obsoleteRelInAnnotExt");
@@ -139,7 +140,18 @@ public class DataValidationImpl {
         for( String annotExt: rga.getAnnotationExtension().split("[\\,\\|]") ) {
             // annotation extension is like this: 'dependent_on(CHEBI:15422)'
             // so extRel is 'dependent_on'
-            String extRel = annotExt.substring(0, annotExt.indexOf('(')).trim();
+            int parenPos = annotExt.indexOf('(');
+            if( parenPos<0 ) {
+                // malformed extension without 'relation(id)' syntax, f.e. free text 'vascular associated smooth muscle cell'
+                // -- it will be removed, the same way as obsolete relations
+                if( obsoleteAnnotExts==null ) {
+                    obsoleteAnnotExts = new ArrayList<>();
+                }
+                obsoleteAnnotExts.add(annotExt);
+                countOfRemovedMalformedExtensions++;
+                continue;
+            }
+            String extRel = annotExt.substring(0, parenPos).trim();
             if( getObsoleteRelations().contains(extRel) ) {
                 // an obsolete relation was found
                 if( obsoleteAnnotExts==null ) {
@@ -177,7 +189,7 @@ public class DataValidationImpl {
                 newAnnotExt = newAnnotExt.replace("|,", "|");
             }
 
-            logObsoleteRelInAnnotExt.debug("obsolete relations removed from annotation extension: '"
+            logObsoleteRelInAnnotExt.debug("obsolete or malformed relations removed from annotation extension: '"
                     +rga.getAnnotationExtension()+"'==>'"+newAnnotExt
                     +"' "+rga.getDb()+" "+rga.getDbObjectId()+" "+rga.getDbObjectSymbol()+" "+rga.getGoId()
                     +" "+rga.getDbReferences()+" "+rga.getEvidence());
@@ -204,6 +216,10 @@ public class DataValidationImpl {
 
     public int getCountOfRemovedObsoleteRelations() {
         return countOfRemovedObsoleteRelations;
+    }
+
+    public int getCountOfRemovedMalformedExtensions() {
+        return countOfRemovedMalformedExtensions;
     }
 
     public int getAnnotationsWithRemovedObsoleteRelations() {

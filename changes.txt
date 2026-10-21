@@ -1,5 +1,6 @@
 Oct 21, 2026
   migrated to postgres; updated dependencies
+  QC: malformed annotation extensions (without relation(id) syntax) are removed instead of aborting the run
 
 Jun 29, 2026
   code cleanup: exit with a non-zero code on failure; logging via log4j instead of System.out; removed dead code; updated dependencies

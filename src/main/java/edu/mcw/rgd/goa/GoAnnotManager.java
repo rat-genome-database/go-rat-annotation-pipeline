@@ -148,6 +148,8 @@ public class GoAnnotManager {
             log.info("WARNING: There were QC restarts: "+qcRestarts);
         log.info("Annotations with removed obsolete relations: "+dataValidation.getAnnotationsWithRemovedObsoleteRelations());
         log.info("  total count of removed obsolete relations: "+dataValidation.getCountOfRemovedObsoleteRelations());
+        if( dataValidation.getCountOfRemovedMalformedExtensions()>0 )
+            log.info("  total count of removed malformed extensions: "+dataValidation.getCountOfRemovedMalformedExtensions());
 		log.info("-------------------------------------------------------");
 		log.info("Log file for annotations that use a PubMed ID which is not in RGD. These annotations are loaded.");
 		log.info("*** Unmatched PubMed ID: "+totUnPubmed);
